@@ -3,21 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI For Everyone</title>
+  <title>AI For Everyone - Free AI Tools for Students</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <script src="auth.js"></script>
-  <script src="app.js"></script>
-  <!-- Mobile Menu Button -->
-<button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
-
-<!-- Sidebar Overlay -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-  
   <!-- Navigation -->
   <nav class="navbar">
     <div class="nav-container">
@@ -26,11 +16,11 @@
         <span class="brand-name">AI For Everyone</span>
       </div>
       <ul class="nav-menu">
-        <li><a href="#solutions">Solutions</a></li>
         <li><a href="#features">Features</a></li>
-        <li><a href="#how">How It Works</a></li>
+        <li><a href="#solutions">Solutions</a></li>
+        <li><a href="#about">About</a></li>
       </ul>
-      <button class="btn-cta" onclick="window.location.href='login.html'">Launch App</button>
+      <button class="btn-cta" onclick="window.location.href='login.html'">Get Started</button>
     </div>
   </nav>
 
@@ -38,26 +28,21 @@
   <section class="hero">
     <div class="hero-bg-gradient"></div>
     <div class="hero-content">
-      <div class="hero-badge">✨ Powered by Groq AI</div>
+      <span class="hero-badge">✨ Powered by Advanced AI</span>
       <h1 class="hero-title">
-        Designed to Delight.<br>
-        Built to <span class="gradient-text">Empower Everyone.</span>
+        Unlock the Power of <span class="gradient-text">Artificial Intelligence</span>
       </h1>
       <p class="hero-subtitle">
-        Transform simple ideas into powerful outcomes. AI that understands you,<br>
-        guides you, and creates with you — all completely free.
+        AI tools for students, professionals, and creators. Chat with AI, analyze documents, and generate stunning images - all in one place, completely free.
       </p>
       <div class="hero-buttons">
-        <button class="btn-primary" onclick="window.location.href='login.html'">
-          Get Started Free
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M7.5 15L12.5 10L7.5 5" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+        <button class="btn-primary large" onclick="window.location.href='login.html'">
+          Start Free Now →
         </button>
-        <button class="btn-secondary">Watch Demo</button>
+        <button class="btn-secondary" onclick="window.location.href='#features'">
+          Explore Features
+        </button>
       </div>
-      
-      <!-- Clean Feature Pills (Not Floating) -->
       <div class="feature-pills">
         <div class="pill">💬 AI Chat Assistant</div>
         <div class="pill">📄 Document Analysis</div>
@@ -69,100 +54,103 @@
   <!-- Solutions Section -->
   <section id="solutions" class="solutions">
     <div class="section-header">
-      <h2 class="section-title">Two Powerful Solutions.<br>One Seamless Experience.</h2>
+      <h2 class="section-title">Three Powerful Solutions, One Platform</h2>
       <div class="solution-tabs">
-        <button class="tab-btn active">Onboarding</button>
-        <button class="tab-btn">AI Automation</button>
+        <button class="tab-btn active">Chat Assistant</button>
+        <button class="tab-btn">Document Analysis</button>
+        <button class="tab-btn">Image Generation</button>
       </div>
     </div>
 
     <div class="solution-showcase">
       <div class="showcase-card">
-        <div class="showcase-badge">Onboarding</div>
-        <h3 class="showcase-title">Automate up to <span class="highlight">90%</span> of manual tasks</h3>
-        <p class="showcase-desc">Smart workflows powered by AI. From document uploads to intelligent form filling.</p>
-        
+        <span class="showcase-badge">AI Chat</span>
+        <h3 class="showcase-title">
+          Your <span class="highlight">Personal AI</span> Assistant
+        </h3>
+        <p class="showcase-desc">
+          Chat with advanced AI powered by Groq's lightning-fast models. Get answers, solve problems, and boost your productivity instantly.
+        </p>
         <div class="workflow">
-          <div class="workflow-step">
-            <div class="step-icon">👤</div>
-            <span>New request</span>
-          </div>
-          <div class="workflow-arrow">→</div>
-          <div class="workflow-step">
-            <div class="step-icon">📤</div>
-            <span>Upload docs</span>
-          </div>
-          <div class="workflow-arrow">→</div>
           <div class="workflow-step active">
-            <div class="step-icon">✨</div>
-            <span>AI processes</span>
+            <span class="step-icon">💬</span>
+            <span>Ask Question</span>
+          </div>
+          <span class="workflow-arrow">→</span>
+          <div class="workflow-step">
+            <span class="step-icon">🤖</span>
+            <span>AI Processes</span>
+          </div>
+          <span class="workflow-arrow">→</span>
+          <div class="workflow-step">
+            <span class="step-icon">✨</span>
+            <span>Get Answer</span>
           </div>
         </div>
-
-        <button class="btn-explore" onclick="window.location.href='login.html'">Explore Onboarding</button>
+        <button class="btn-explore" onclick="window.location.href='login.html'">Try AI Chat</button>
       </div>
     </div>
   </section>
 
-  <!-- Features Grid -->
+  <!-- Features Section -->
   <section id="features" class="features">
-    <h2 class="section-title">Everything You Need, All In One Place</h2>
+    <h2 class="section-title">Everything You Need in One Place</h2>
     <div class="features-grid">
-      
       <div class="feature-card">
         <div class="feature-icon gradient-orange">💬</div>
-        <h3>Smart AI Chat</h3>
-        <p>Conversational AI that understands context and provides detailed answers.</p>
+        <h3>AI Chat Assistant</h3>
+        <p>Intelligent conversations powered by advanced language models. Get instant answers to any question.</p>
       </div>
-
+      
       <div class="feature-card">
         <div class="feature-icon gradient-purple">📄</div>
-        <h3>Document Intelligence</h3>
-        <p>Upload documents and get instant, accurate insights.</p>
+        <h3>Document Analysis</h3>
+        <p>Upload PDFs and documents. Get summaries, key points, and ask questions about your content.</p>
       </div>
-
+      
       <div class="feature-card">
         <div class="feature-icon gradient-blue">🎨</div>
         <h3>Image Generation</h3>
-        <p>AI enhances your prompts and generates stunning visuals.</p>
+        <p>Create stunning AI-generated images from text descriptions. Perfect for presentations and projects.</p>
       </div>
-
+      
       <div class="feature-card">
-        <div class="feature-icon gradient-green">⚡</div>
+        <div class="feature-icon gradient-green">🚀</div>
         <h3>Lightning Fast</h3>
-        <p>Powered by Groq - 300+ tokens per second response time.</p>
+        <p>Powered by Groq's cutting-edge infrastructure for ultra-fast AI responses.</p>
       </div>
-
+      
       <div class="feature-card">
         <div class="feature-icon gradient-pink">🔒</div>
         <h3>Private & Secure</h3>
-        <p>Your data stays with you. Processing happens securely.</p>
+        <p>Your data stays private. We don't store your conversations or documents.</p>
       </div>
-
+      
       <div class="feature-card">
-        <div class="feature-icon gradient-red">💎</div>
+        <div class="feature-icon gradient-red">💯</div>
         <h3>100% Free</h3>
-        <p>No hidden costs. Full access to all features, forever.</p>
+        <p>All features are completely free. No credit card required, no hidden fees.</p>
       </div>
-
     </div>
   </section>
 
   <!-- CTA Section -->
   <section class="cta-section">
     <div class="cta-content">
-      <h2 class="cta-title">Ready to Experience AI Made Simple?</h2>
-      <p class="cta-text">Join thousands creating, analyzing, and innovating with AI.</p>
+      <h2 class="cta-title">Ready to Experience AI?</h2>
+      <p class="cta-text">Join thousands of students and professionals using AI For Everyone to boost their productivity.</p>
       <button class="btn-primary large" onclick="window.location.href='login.html'">
-        Start Creating Now
+        Get Started Free →
       </button>
     </div>
   </section>
 
   <!-- Footer -->
   <footer class="footer">
-    <p>© 2025 AI For Everyone. Powered by Groq AI. Built with ❤️ for creators.</p>
+    <p>&copy; 2025 AI For Everyone. Built with ❤️ for students.</p>
   </footer>
 
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
