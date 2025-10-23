@@ -64,7 +64,8 @@ async function enhancePrompt() {
   showNotification('✨ Enhancing prompt...', 'info');
   
   try {
-    const response = await fetch('http://localhost:3000/api/enhance-prompt', {
+    const response = await fetch('https://ai-for-everyone-backend.onrender.com/api/generate-image'
+, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: prompt })
@@ -110,7 +111,8 @@ async function generateImage() {
   generatedImage.style.display = 'none';
 
   try {
-    const response = await fetch('http://localhost:3000/api/generate-image', {
+    const response = await fetch('https://ai-for-everyone-backend.onrender.com/api/generate-image'
+, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -17,7 +17,8 @@ if (location.hostname === "localhost" || location.hostname.startsWith("127")) {
 }
 
 // Backend API URL
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://ai-for-everyone-backend.onrender.com/api';
+
 
 // ----------------- Chat Functionality -----------------
 function sendMessage() {

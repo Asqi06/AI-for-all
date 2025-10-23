@@ -217,6 +217,20 @@ app.post('/api/enhance-prompt', async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.json({
+    message: '🚀 AI For Everyone Backend is Running!',
+    status: 'online',
+    endpoints: {
+      chat: '/api/chat',
+      generateImage: '/api/generate-image',
+      analyzeDocument: '/api/analyze-document',
+      enhancePrompt: '/api/enhance-prompt',
+      health: '/api/health'
+    }
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);

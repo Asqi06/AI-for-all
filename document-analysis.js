@@ -213,7 +213,8 @@ async function askQuestion() {
     const allDocsText = uploadedDocuments.map(doc => doc.content).join('\n\n---\n\n');
 
     // Send to backend
-    const response = await fetch('http://localhost:3000/api/analyze-document', {
+    const response = await fetch('https://ai-for-everyone-backend.onrender.com/api/analyze-document'
+, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
