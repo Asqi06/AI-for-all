@@ -229,14 +229,18 @@ function showNotification(message, type = 'info') {
 // ----------------- Backend Health Check & Dev Mode Status -----------------
 async function checkBackendHealth() {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`);
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      method: 'GET',
+      cache: 'no-cache'
+    });
     const data = await response.json();
     console.log('✅ Backend connected:', data.status);
   } catch (error) {
-    console.warn('⚠️ Backend not connected. Make sure server is running on port 3000');
-    showNotification('⚠️ Backend server not connected', 'warning');
+    // Silent fail - just log to console, no notification
+    console.warn('⚠️ Backend health check failed');
   }
 }
+
 
 function showDevMode() {
   if (API_BASE_URL.includes('localhost')) {
@@ -252,11 +256,20 @@ function showDevMode() {
 
 // ----------------- Initialize on page load -----------------
 document.addEventListener('DOMContentLoaded', () => {
-  updateStats();
-  showDevMode();
-  checkBackendHealth();
-  if (typeof loadUserInfo === 'function') loadUserInfo();
+  // Only run on dashboard pages, not login or index
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  const dashboardPages = ['dashboard.html', 'chat.html', 'document.html', 'image.html', 'history.html', 'settings.html'];
+  
+  if (dashboardPages.includes(currentPage)) {
+    initializeDashboard();
+    updateStats();
+  }
+  
+  if (typeof loadUserInfo === 'function' && currentPage !== 'login.html') {
+    loadUserInfo();
+  }
 });
+
 
 // ----------------- Export handlers to HTML -----------------
 window.sendMessage = sendMessage;

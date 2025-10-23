@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - AI For Everyone</title>
   <link rel="stylesheet" href="styles.css">
-<script src="app.js"></script>
-<script src="auth.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -71,6 +69,15 @@
     </div>
   </div>
 
-  <script src="auth.js"></script>
+  <script src="auth.js">
+// Prevent redirect loop on login page
+window.onload = function() {
+  // If user is already logged in, redirect to dashboard
+  const user = localStorage.getItem('user');
+  if (user) {
+    window.location.href = 'dashboard.html';
+  }
+};
+</script>
 </body>
 </html>
