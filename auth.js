@@ -40,25 +40,26 @@ function logout() {
 // ======= Load user info (Name, Email, Avatar) =======
 function loadUserInfo() {
   const userStr = localStorage.getItem('user');
+  
+  // Get current page
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  
+  // Pages that DON'T require login
+  const publicPages = ['index.html', 'login.html', ''];
+  
   if (!userStr) {
-    // Not logged in - redirect to login (except on login/index pages)
-    if (
-      !window.location.href.includes('login.html') &&
-      !window.location.href.includes('index.html')
-    ) {
+    // If no user and NOT on a public page, redirect to login
+    if (!publicPages.includes(currentPage)) {
       window.location.href = 'login.html';
     }
-    return;
+    return; // Stop here if no user
   }
 
+  // User exists, load their info
   const userData = JSON.parse(userStr);
-
-  // Update all elements with user info
   const userNameElements = document.querySelectorAll('#userName, .user-name');
   const userEmailElements = document.querySelectorAll('#userEmail, .user-email');
-  const userAvatarElements = document.querySelectorAll(
-    '#userAvatar, .user-avatar, .profile-avatar'
-  );
+  const userAvatarElements = document.querySelectorAll('#userAvatar, .user-avatar, .profile-avatar');
 
   userNameElements.forEach(el => {
     if (el) el.textContent = userData.name || 'User';
@@ -68,13 +69,10 @@ function loadUserInfo() {
   });
   userAvatarElements.forEach(el => {
     if (el)
-      el.src =
-        userData.picture ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          userData.name || 'User'
-        )}&background=FF6B35&color=fff`;
+      el.src = userData.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=FF6B35&color=fff`;
   });
 }
+
 
 // ======= Default (manual) Login support (for dev/local use) =======
 document.addEventListener('DOMContentLoaded', () => {
