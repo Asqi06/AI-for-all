@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - AI For Everyone</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+  <!-- Mobile Menu Button -->
+<button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">AI</div>
+      <span class="brand-name">AI For Everyone</span>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item active">
+        <span class="nav-icon">🏠</span>
+        Dashboard
+      </a>
+      <a href="chat.html" class="nav-item">
+        <span class="nav-icon">💬</span>
+        AI Chat
+      </a>
+      <a href="document.html" class="nav-item">
+        <span class="nav-icon">📄</span>
+        Documents
+      </a>
+      <a href="image.html" class="nav-item">
+        <span class="nav-icon">🎨</span>
+        Images
+      </a>
+      <a href="history.html" class="nav-item">
+        <span class="nav-icon">🕒</span>
+        History
+      </a>
+      <!-- In sidebar-nav section, add this -->
+<a href="settings.html" class="nav-item">
+  <span class="nav-icon">⚙️</span>
+  Settings
+</a>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <img src="https://ui-avatars.com/api/?name=User&background=FF6B35&color=fff" alt="User" id="userAvatar">
+        <div>
+          <div class="user-name" id="userName">User</div>
+          <div class="user-email" id="userEmail">user@email.com</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="dashboard-header">
+      <h1>Welcome back! 👋</h1>
+      <p>What would you like to create today?</p>
+    </header>
+
+    <div class="dashboard-grid">
+      
+      <!-- Chat Card - FIXED NAVIGATION -->
+      <a href="chat.html" class="dashboard-card-link">
+        <div class="dashboard-card">
+          <div class="card-icon gradient-orange">💬</div>
+          <h3>AI Chat</h3>
+          <p>Start a conversation with AI</p>
+          <button class="card-btn">Open Chat →</button>
+        </div>
+      </a>
+
+      <!-- Document Analysis Card - FIXED NAVIGATION -->
+      <a href="document.html" class="dashboard-card-link">
+        <div class="dashboard-card">
+          <div class="card-icon gradient-purple">📄</div>
+          <h3>Analyze Document</h3>
+          <p>Upload and get insights</p>
+          <button class="card-btn">Upload Doc →</button>
+        </div>
+      </a>
+
+      <!-- Image Generation Card - FIXED NAVIGATION -->
+      <a href="image.html" class="dashboard-card-link">
+        <div class="dashboard-card">
+          <div class="card-icon gradient-blue">🎨</div>
+          <h3>Generate Image</h3>
+          <p>Create visuals with AI</p>
+          <button class="card-btn">Create Image →</button>
+        </div>
+      </a>
+
+      <!-- History Card - FIXED NAVIGATION -->
+      <a href="history.html" class="dashboard-card-link">
+        <div class="dashboard-card">
+          <div class="card-icon gradient-green">🕒</div>
+          <h3>Recent Activity</h3>
+          <p>View your history</p>
+          <button class="card-btn">View All →</button>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-section">
+      <h2>Your Activity</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="chatCount">0</div>
+          <div class="stat-label">Chats</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="docCount">0</div>
+          <div class="stat-label">Documents</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="imageCount">0</div>
+          <div class="stat-label">Images</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

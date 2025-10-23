@@ -1,0 +1,9 @@
+@font-face {
+  font-family: "PlusJakarta";
+  src: url("../fonts/PlusJakartaSans.ttf");
+}
+body { font-family: "PlusJakarta", Arial, sans-serif; margin:0; background:#f8f9fa; color:#222; }
+a { color: #ff4500; text-decoration: none; }
+h1, h2, h3 { font-weight: bold; }
+.button, .cta-btn { border-radius: 30px; padding: 14px 32px; border:none; background: #ff4500; color: #fff; font-size: 1rem; box-shadow: 0 4px 16px rgba(255,69,0,0.09);}
+.glass-blur { background: rgba(255,255,255,0.8); backdrop-filter: blur(18px); }

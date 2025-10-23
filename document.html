@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Analysis - AI For Everyone</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+  <!-- Mobile Menu Button -->
+<button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">AI</div>
+      <span class="brand-name">AI For Everyone</span>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        Dashboard
+      </a>
+      <a href="chat.html" class="nav-item">
+        <span class="nav-icon">💬</span>
+        AI Chat
+      </a>
+      <a href="document.html" class="nav-item active">
+        <span class="nav-icon">📄</span>
+        Documents
+      </a>
+      <a href="image.html" class="nav-item">
+        <span class="nav-icon">🎨</span>
+        Images
+      </a>
+      <a href="history.html" class="nav-item">
+        <span class="nav-icon">🕒</span>
+        History
+      </a>
+      <!-- In sidebar-nav section, add this -->
+<a href="settings.html" class="nav-item">
+  <span class="nav-icon">⚙️</span>
+  Settings
+</a>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <img src="https://ui-avatars.com/api/?name=User&background=FF6B35&color=fff" alt="User" id="userAvatar">
+        <div>
+          <div class="user-name" id="userName">User</div>
+          <div class="user-email" id="userEmail">user@email.com</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="dashboard-header">
+      <div>
+        <h1>📄 Document Analysis</h1>
+        <p>Upload documents and get instant AI-powered insights</p>
+      </div>
+    </header>
+
+    <!-- Upload Section -->
+<div class="upload-section">
+  <div class="upload-card">
+    <div class="upload-icon">📤</div>
+    <h2>Upload Documents (Max 7 files, 6MB total)</h2>
+    <p>Supports PDF, Word, and Text files. Upload multiple documents at once!</p>
+    
+    <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.txt" multiple style="display:none" onchange="handleDocumentUpload(event)">
+    <button class="btn-primary" onclick="document.getElementById('docFileInput').click()">
+      Choose Files (Multiple)
+    </button>
+    
+    <div class="upload-stats">
+      <div class="stat">📁 Files: <span id="fileCount">0/7</span></div>
+      <div class="stat">💾 Size: <span id="totalSize">0/6MB</span></div>
+    </div>
+    
+    <div class="or-divider">OR</div>
+    
+    <div class="paste-section">
+      <textarea id="pasteText" placeholder="Paste your text here for quick analysis..." rows="6"></textarea>
+      <button class="btn-secondary" onclick="analyzeText()">Analyze Text</button>
+    </div>
+  </div>
+</div>
+
+
+    <!-- Analysis Result Section -->
+    <div id="analysisSection" class="analysis-section" style="display:none;">
+      <div class="analysis-header">
+        <h2>Analysis Results</h2>
+        <button class="btn-secondary" onclick="clearAnalysis()">New Analysis</button>
+      </div>
+
+      <div class="analysis-grid">
+        <!-- Document Info Card -->
+        <div class="info-card">
+          <div class="info-header">
+            <span class="info-icon">📋</span>
+            <h3>Document Info</h3>
+          </div>
+          <div class="info-content">
+            <div class="info-row">
+              <span class="info-label">File Name:</span>
+              <span class="info-value" id="docName">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">File Size:</span>
+              <span class="info-value" id="docSize">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Word Count:</span>
+              <span class="info-value" id="wordCount">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="result-card">
+          <div class="card-header">
+            <span class="card-icon">✨</span>
+            <h3>AI Summary</h3>
+          </div>
+          <div class="card-content">
+            <div id="summaryResult" class="result-text">Analyzing...</div>
+          </div>
+        </div>
+
+        <!-- Key Points Card -->
+        <div class="result-card">
+          <div class="card-header">
+            <span class="card-icon">🎯</span>
+            <h3>Key Points</h3>
+          </div>
+          <div class="card-content">
+            <div id="keyPointsResult" class="result-text">Extracting key points...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Q&A Section -->
+      <div class="qa-section">
+        <h3>Ask Questions About This Document</h3>
+        <div class="qa-input-container">
+          <input type="text" id="questionInput" placeholder="What would you like to know about this document?" onkeydown="handleQuestionKeyPress(event)">
+          <button class="btn-primary" onclick="askQuestion()">Ask</button>
+        </div>
+        <div id="qaResults" class="qa-results"></div>
+      </div>
+    </div>
+
+    <!-- Recent Documents -->
+    <div class="recent-docs-section">
+      <h2>Recent Documents</h2>
+      <div id="recentDocsList" class="recent-docs-list">
+        <div class="empty-state">
+          <div class="empty-icon">📂</div>
+          <p>No documents analyzed yet</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="document-analysis.js"></script>
+  <script src="pdf-parser.js"></script>
+<script src="usage-limits.js"></script>
+
+</body>
+</html>

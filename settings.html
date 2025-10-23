@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - AI For Everyone</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+  <!-- Mobile Menu Button -->
+<button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">AI</div>
+      <span class="brand-name">AI For Everyone</span>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        Dashboard
+      </a>
+      <a href="chat.html" class="nav-item">
+        <span class="nav-icon">💬</span>
+        AI Chat
+      </a>
+      <a href="document.html" class="nav-item">
+        <span class="nav-icon">📄</span>
+        Documents
+      </a>
+      <a href="image.html" class="nav-item">
+        <span class="nav-icon">🎨</span>
+        Images
+      </a>
+      <a href="history.html" class="nav-item">
+        <span class="nav-icon">🕒</span>
+        History
+      </a>
+      <a href="settings.html" class="nav-item active">
+        <span class="nav-icon">⚙️</span>
+        Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <img src="https://ui-avatars.com/api/?name=User&background=FF6B35&color=fff" alt="User" id="userAvatar">
+        <div>
+          <div class="user-name" id="userName">User</div>
+          <div class="user-email" id="userEmail">user@email.com</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="dashboard-header">
+      <div>
+        <h1>⚙️ Settings</h1>
+        <p>Manage your API keys and preferences</p>
+      </div>
+    </header>
+
+    <!-- API Keys Section -->
+    <div class="settings-section">
+  <h2>ℹ️ About</h2>
+  <div class="settings-card">
+    <h3>AI For Everyone</h3>
+    <p>All AI features are powered by secure backend servers. You don't need any API keys - just enjoy creating!</p>
+    <ul>
+      <li>✅ Unlimited AI Chat</li>
+      <li>✅ Document Analysis</li>
+      <li>✅ Image Generation (5 Models)</li>
+      <li>✅ 100% Free</li>
+    </ul>
+  </div>
+</div>
+
+
+    <!-- Usage Stats -->
+    <div class="settings-section">
+      <h2>📊 Usage Statistics</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon gradient-orange">💬</div>
+          <div>
+            <div class="stat-number" id="totalChats">0</div>
+            <div class="stat-label">Total Chats</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon gradient-purple">📄</div>
+          <div>
+            <div class="stat-number" id="totalDocs">0</div>
+            <div class="stat-label">Documents Analyzed</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon gradient-blue">🎨</div>
+          <div>
+            <div class="stat-number" id="totalImages">0</div>
+            <div class="stat-label">Images Generated</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Management -->
+    <div class="settings-section">
+      <h2>🗑️ Data Management</h2>
+      <div class="settings-card danger">
+        <h3>Clear All Data</h3>
+        <p>This will delete all your history, generated images, and preferences. API keys will be removed.</p>
+        <button class="btn-danger" onclick="clearAllData()">Clear Everything</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

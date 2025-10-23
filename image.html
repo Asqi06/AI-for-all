@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Generation - AI For Everyone</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+  <!-- Mobile Menu Button -->
+  <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-circle">AI</div>
+      <span class="brand-name">AI For Everyone</span>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        Dashboard
+      </a>
+      <a href="chat.html" class="nav-item">
+        <span class="nav-icon">💬</span>
+        AI Chat
+      </a>
+      <a href="document.html" class="nav-item">
+        <span class="nav-icon">📄</span>
+        Documents
+      </a>
+      <a href="image.html" class="nav-item active">
+        <span class="nav-icon">🎨</span>
+        Images
+      </a>
+      <a href="history.html" class="nav-item">
+        <span class="nav-icon">🕒</span>
+        History
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        Settings
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <img src="https://ui-avatars.com/api/?name=User&background=FF6B35&color=fff" alt="User" id="userAvatar">
+        <div>
+          <div class="user-name" id="userName">User</div>
+          <div class="user-email" id="userEmail">user@email.com</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="dashboard-header">
+      <div>
+        <h1>🎨 AI Image Generation</h1>
+        <p>Describe your vision and let AI create stunning visuals</p>
+      </div>
+    </header>
+
+    <!-- Generation Section -->
+    <div class="image-gen-section">
+      <div class="prompt-builder-card">
+        <h2>Describe Your Image</h2>
+        <textarea id="imagePrompt" placeholder="Example: A futuristic city at sunset with flying cars, neon lights, cyberpunk style..." rows="4"></textarea>
+        
+        <div class="prompt-suggestions">
+          <h4>Quick Prompts:</h4>
+          <div class="suggestion-pills">
+            <button class="suggestion-pill" onclick="setPrompt('A majestic mountain landscape at golden hour')">🏔️ Mountain Landscape</button>
+            <button class="suggestion-pill" onclick="setPrompt('A cute robot reading a book in a cozy library')">🤖 Cute Robot</button>
+            <button class="suggestion-pill" onclick="setPrompt('Abstract geometric patterns in vibrant colors')">🎨 Abstract Art</button>
+            <button class="suggestion-pill" onclick="setPrompt('A modern minimalist office with plants')">🏢 Modern Office</button>
+          </div>
+        </div>
+
+        <!-- ✅ GENERATION CONTROLS - ADDED HERE -->
+        <div class="generation-controls">
+          <button class="btn-secondary" onclick="enhancePrompt()">✨ Enhance Prompt</button>
+          <button class="btn-primary large" onclick="generateImage()">🎨 Generate Image</button>
+        </div>
+
+        <!-- Enhanced Prompt Display -->
+        <div id="enhancedPromptCard" class="enhanced-prompt-card" style="display:none;">
+          <h3>✨ Enhanced Prompt</h3>
+          <p id="enhancedPromptText"></p>
+          <button class="btn-secondary small" onclick="useEnhancedPrompt()">Use This</button>
+        </div>
+
+        <!-- Model Selector -->
+        <div class="provider-selector">
+          <h4>🎨 Choose Image Provider:</h4>
+          <div class="provider-grid">
+            <div class="provider-btn active" onclick="switchProvider('auto')">
+              <strong>Auto (Smart) 🤖</strong>
+              <p>Automatic fallback</p>
+              <span class="limit-badge">Unlimited</span>
+            </div>
+            
+            <div class="provider-btn" onclick="switchProvider('pollinations')">
+              <strong>Pollinations 🌟</strong>
+              <p>Best quality FLUX</p>
+              <span class="limit-badge">Unlimited</span>
+            </div>
+            
+            <div class="provider-btn" onclick="switchProvider('puter')">
+              <strong>Puter GPT ⚡</strong>
+              <p>OpenAI quality</p>
+              <span class="limit-badge">Unlimited</span>
+            </div>
+            
+            <div class="provider-btn" onclick="switchProvider('together')">
+              <strong>Together.AI 💎</strong>
+              <p>Premium FLUX</p>
+              <span class="limit-badge">~500/month</span>
+            </div>
+            
+            <div class="provider-btn" onclick="switchProvider('deepai')">
+              <strong>DeepAI 🎨</strong>
+              <p>Reliable quality</p>
+              <span class="limit-badge">Unlimited</span>
+            </div>
+          </div>
+          
+          <div class="provider-info">
+            <p><strong>✨ All providers are 100% free!</strong></p>
+            <p>Auto mode tries all providers until one succeeds for maximum reliability.</p>
+          </div>
+        </div>
+
+        <!-- Provider info display -->
+        <p id="providerInfo" style="display:none; text-align:center; margin-top:10px; color:#666; font-size:13px;"></p>
+      </div>
+    </div>
+
+    <!-- Generation Result -->
+    <div id="imageResultSection" class="image-result-section" style="display:none;">
+      <div class="result-header">
+        <h2>Generated Image</h2>
+        <div class="result-actions">
+          <button class="btn-secondary" onclick="downloadImage()">⬇️ Download</button>
+          <button class="btn-secondary" onclick="shareImage()">🔗 Share</button>
+          <button class="btn-primary" onclick="resetGenerator()">+ Generate New</button>
+        </div>
+      </div>
+      
+      <div class="generated-image-container">
+        <div id="loadingSpinner" class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Creating your masterpiece...</p>
+        </div>
+        <img id="generatedImage" alt="Generated Image" style="display:none;">
+      </div>
+
+      <div class="image-details">
+        <div class="detail-item">
+          <span class="detail-label">Prompt Used:</span>
+          <span class="detail-value" id="usedPrompt">-</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Provider:</span>
+          <span class="detail-value" id="usedProvider">-</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Generated:</span>
+          <span class="detail-value" id="genTime">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery-section">
+      <h2>Your Generated Images</h2>
+      <div id="imageGallery" class="image-gallery">
+        <div class="empty-state">
+          <div class="empty-icon">🖼️</div>
+          <p>No images generated yet</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+  <script src="image-gen.js"></script>
+  <script src="pdf-parser.js"></script>
+  <script src="usage-limits.js"></script>
+</body>
+</html>

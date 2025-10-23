@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AI Chat App</title>
+  <link rel="stylesheet" href="../styles/base.css"/>
+  <link rel="stylesheet" href="../styles/app.css"/>
+  <link rel="preload" href="../fonts/PlusJakartaSans.ttf" as="font" type="font/ttf" crossorigin>
+  <script defer src="../scripts/app.js"></script>
+  <script defer src="../scripts/auth.js"></script>
+  <script defer src="../scripts/domains.js"></script>
+</head>
+<body>
+  <nav class="sub-nav">
+    <div class="profile-info">
+      <img id="profile-pic" src="assets/logo.svg" alt="User"/>
+      <span id="profile-name">Welcome</span>
+      <button id="logout-btn">Logout</button>
+    </div>
+    <ul class="app-tabs">
+      <li><a href="#chat" class="tab-link active">AI Chat</a></li>
+      <li><a href="#doc" class="tab-link">Document Analysis</a></li>
+      <li><a href="#image" class="tab-link">Image Gen</a></li>
+      <li><a href="#history" class="tab-link">History</a></li>
+    </ul>
+  </nav>
+  <!-- Content Panels -->
+  <main>
+    <section id="chat" class="panel active">
+      <div class="chat-window">
+        <div class="messages" id="chat-messages"></div>
+        <div class="chat-input-bar">
+          <input id="chat-input" placeholder="Ask anything..." autocomplete="off">
+          <button id="chat-send-btn">Send</button>
+        </div>
+      </div>
+    </section>
+    <section id="doc" class="panel">
+      <h2>Document Analysis</h2>
+      <input type="file" id="doc-upload" accept=".pdf,.doc,.txt"/>
+      <button id="doc-analyze-btn">Analyze</button>
+      <div id="doc-result"></div>
+    </section>
+    <section id="image" class="panel">
+      <h2>Guided Image Generator</h2>
+      <div class="prompt-builder">
+        <input id="img-prompt" placeholder="Describe your image...">
+        <button id="img-enhance-btn">AI Enhance</button>
+        <button id="img-generate-btn">Generate</button>
+      </div>
+      <div id="img-result"></div>
+    </section>
+    <section id="history" class="panel">
+      <h2>Session History</h2>
+      <div id="history-list"></div>
+    </section>
+  </main>
+</body>
+</html>
