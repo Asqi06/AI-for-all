@@ -1,414 +1,272 @@
-let uploadedDocuments = [];
-const MAX_FILES = 7;
-const MAX_TOTAL_SIZE = 6 * 1024 * 1024; // 6MB
+const API_BASE_URL = 'https://ai-for-everyone-backend.onrender.com/api';
 
-async function handleDocumentUpload(event) {
-  const files = Array.from(event.target.files);
-  if (files.length === 0) return;
+let uploadedDocument = null;
 
-  // Validate file count and size
-  if (uploadedDocuments.length + files.length > MAX_FILES) {
-    showNotification(`Maximum ${MAX_FILES} files allowed. You have ${uploadedDocuments.length} already.`, 'error');
-    return;
-  }
-  const totalSize = [...uploadedDocuments, ...files].reduce((sum, doc) => sum + (doc.file ? doc.file.size : doc.size), 0);
-  if (totalSize > MAX_TOTAL_SIZE) {
-    showNotification(`Total size cannot exceed 6MB. Current size: ${(totalSize / (1024 * 1024)).toFixed(2)}MB`, 'error');
+async function uploadDocument() {
+  const fileInput = document.getElementById('documentUpload');
+  const file = fileInput.files[0];
+
+  if (!file) {
+    showNotification('Please select a file!', 'warning');
     return;
   }
 
-  showNotification('Processing files...', 'info');
-  for (const file of files) {
-    try {
-      const allowedTypes = ['.pdf', '.txt', '.docx'];
-      const fileName = file.name.toLowerCase();
-      const isAllowed = allowedTypes.some(type => fileName.endsWith(type));
-      if (!isAllowed) {
-        showNotification(`${file.name}: Only PDF, TXT, and DOCX files are supported`, 'warning');
-        continue;
-      }
-      const text = await extractTextFromFile(file);
-      if (!text || text.trim().length < 10) {
-        showNotification(`${file.name}: File is empty or unreadable`, 'warning');
-        continue;
-      }
-      const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
-      uploadedDocuments.push({
-        file,
-        name: file.name,
-        size: (file.size / 1024).toFixed(2) + ' KB',
-        content: text,
-        wordCount: wordCount
-      });
-    } catch (error) {
-      console.error(`Error processing ${file.name}:`, error);
-      showNotification(`${file.name}: ${error.message}`, 'error');
-    }
-  }
-  if (uploadedDocuments.length > 0) {
-    displayUploadedDocuments();
-    showNotification(`✅ ${uploadedDocuments.length} document(s) uploaded successfully!`, 'success');
-  }
-  event.target.value = '';
-}
-
-function displayUploadedDocuments() {
-  const container = document.getElementById('uploadedDocsList');
-  if (!container) {
-    const analysisSection = document.getElementById('analysisSection') || createAnalysisSection();
-    const uploadedSection = document.createElement('div');
-    uploadedSection.id = 'uploadedSection';
-    uploadedSection.className = 'uploaded-section';
-    uploadedSection.innerHTML = `
-      <div class="section-header">
-        <h3>📄 Uploaded Documents (${uploadedDocuments.length}/${MAX_FILES})</h3>
-        <button class="btn-secondary" onclick="analyzeAllDocuments()">Analyze All</button>
-      </div>
-      <div id="uploadedDocsList" class="uploaded-docs-list"></div>
-    `;
-    analysisSection.parentNode.insertBefore(uploadedSection, analysisSection);
-  }
-  const docsList = document.getElementById('uploadedDocsList');
-  docsList.innerHTML = uploadedDocuments.map((doc, index) => `
-    <div class="uploaded-doc-card">
-      <div class="doc-info">
-        <div class="doc-icon">${getFileIcon(doc.name)}</div>
-        <div class="doc-details">
-          <div class="doc-name">${doc.name}</div>
-          <div class="doc-meta">${doc.size} • ${doc.wordCount} words</div>
-        </div>
-      </div>
-      <div class="doc-actions">
-        <button class="btn-secondary small" onclick="analyzeDocument(${index})">Analyze</button>
-        <button class="btn-danger small" onclick="removeDocument(${index})">×</button>
-      </div>
-    </div>
-  `).join('');
-  const header = document.querySelector('#uploadedSection .section-header h3');
-  if (header) {
-    header.textContent = `📄 Uploaded Documents (${uploadedDocuments.length}/${MAX_FILES})`;
-  }
-}
-
-function getFileIcon(filename) {
-  const ext = filename.split('.').pop().toLowerCase();
-  switch(ext) {
-    case 'pdf': return '📕';
-    case 'txt': return '📝';
-    case 'docx': return '📘';
-    default: return '📄';
-  }
-}
-
-function removeDocument(index) {
-  uploadedDocuments.splice(index, 1);
-  if (uploadedDocuments.length === 0) {
-    const uploadedSection = document.getElementById('uploadedSection');
-    if (uploadedSection) uploadedSection.remove();
-  } else {
-    displayUploadedDocuments();
-  }
-  showNotification('Document removed', 'info');
-}
-
-async function analyzeDocument(index) {
-  const doc = uploadedDocuments[index];
-  if (!doc) return;
-
-  const analysisSection = createAnalysisSection();
-  analysisSection.style.display = 'block';
-  analysisSection.scrollIntoView({ behavior: 'smooth' });
-
-  document.getElementById('docName').textContent = doc.name;
-  document.getElementById('docSize').textContent = doc.size;
-  document.getElementById('wordCount').textContent = doc.wordCount;
-
-  document.getElementById('summaryResult').innerHTML = '<div class="loading-dots">📖 Analyzing document...</div>';
-  document.getElementById('keyPointsResult').innerHTML = '<div class="loading-dots">🎯 Extracting key points...</div>';
+  // Show loading
+  showNotification('📄 Processing document...', 'info');
 
   try {
-    const summaryPrompt = `Please provide a clear, well-structured summary of this document in 2-3 paragraphs (max 200 words). Focus on the main topics, key findings, and important details:\n\n${doc.content.substring(0, 20000)}`;
-    const summary = await callAnalysisAPI(summaryPrompt);
+    let content = '';
+    
+    if (file.type === 'application/pdf') {
+      // Use PDF.js to extract text
+      content = await extractTextFromPDF(file);
+    } else if (file.type === 'text/plain') {
+      content = await file.text();
+    } else {
+      throw new Error('Unsupported file type. Please upload PDF or TXT files.');
+    }
 
-    document.getElementById('summaryResult').innerHTML = summary.replace(/\n/g, '<br>');
-    const keyPointsPrompt = `Extract 5-7 most important key points from this document. Format as a numbered list with clear, concise explanations:\n\n${doc.content.substring(0, 20000)}`;
-    const keyPoints = await callAnalysisAPI(keyPointsPrompt);
-    document.getElementById('keyPointsResult').innerHTML = keyPoints.replace(/\n/g, '<br>');
-    window.currentAnalyzedDocument = doc;
+    if (!content || content.trim().length === 0) {
+      throw new Error('Could not extract text from document');
+    }
 
-    saveToHistory('document', doc.name, summary);
-    loadRecentDocs();
-    showNotification('✅ Document analyzed successfully!', 'success');
+    uploadedDocument = {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      content: content,
+      uploadDate: new Date().toISOString()
+    };
+
+    displayDocumentInfo();
+    showNotification('✅ Document uploaded successfully!', 'success');
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    showNotification('❌ Upload failed: ' + error.message, 'error');
+  }
+}
+
+function displayDocumentInfo() {
+  if (!uploadedDocument) return;
+
+  document.getElementById('documentInfo').style.display = 'block';
+  document.getElementById('docName').textContent = uploadedDocument.name;
+  document.getElementById('docSize').textContent = formatFileSize(uploadedDocument.size);
+  document.getElementById('docType').textContent = uploadedDocument.type;
+  document.getElementById('docDate').textContent = new Date(uploadedDocument.uploadDate).toLocaleString();
+
+  // Enable analysis buttons
+  document.querySelectorAll('.analysis-section button').forEach(btn => {
+    btn.disabled = false;
+  });
+}
+
+async function analyzeDocument() {
+  if (!uploadedDocument) {
+    showNotification('Please upload a document first!', 'warning');
+    return;
+  }
+
+  const summaryEl = document.getElementById('summaryText');
+  summaryEl.innerHTML = '<p style="text-align:center;">⏳ Analyzing document... (may take 30-60 seconds on first request)</p>';
+  document.getElementById('analysisResults').style.display = 'block';
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/analyze-document`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: uploadedDocument.content,
+        type: uploadedDocument.type
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Backend error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format from API');
+    }
+
+    const analysis = data.choices[0].message.content;
+    summaryEl.innerHTML = analysis;
+    
+    showNotification('✅ Analysis complete!', 'success');
+
   } catch (error) {
     console.error('Analysis error:', error);
-    document.getElementById('summaryResult').innerHTML = `<div style="color: #f44;">Error: ${error.message}</div>`;
-    document.getElementById('keyPointsResult').innerHTML = `<div style="color: #f44;">Analysis failed</div>`;
+    summaryEl.innerHTML = `<p style="color:red;">❌ Analysis failed: ${error.message}</p>`;
     showNotification('❌ Analysis failed: ' + error.message, 'error');
   }
 }
 
-async function analyzeAllDocuments() {
-  if (uploadedDocuments.length === 0) {
-    showNotification('No documents to analyze', 'warning');
+async function extractKeyPoints() {
+  if (!uploadedDocument) {
+    showNotification('Please upload a document first!', 'warning');
     return;
   }
-  showNotification('Analyzing all documents...', 'info');
-  for (let i = 0; i < uploadedDocuments.length; i++) {
-    await analyzeDocument(i);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-}
 
-function analyzeText() {
-  const text = document.getElementById('pasteText').value.trim();
-  if (!text) {
-    showNotification('Please paste some text first!', 'warning');
-    return;
+  const keyPointsEl = document.getElementById('keyPointsList');
+  keyPointsEl.innerHTML = '<li style="list-style:none;">⏳ Extracting key points...</li>';
+  document.getElementById('keyPointsCard').style.display = 'block';
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/analyze-document`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: `Extract 5-7 key points from this document in bullet format:\n\n${uploadedDocument.content.substring(0, 10000)}`,
+        type: uploadedDocument.type
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Backend error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format');
+    }
+
+    const keyPoints = data.choices[0].message.content;
+    
+    // Parse bullet points
+    const points = keyPoints.split('\n')
+      .filter(line => line.trim().length > 0)
+      .map(line => line.replace(/^[-*•]\s*/, '').trim())
+      .filter(line => line.length > 0);
+
+    keyPointsEl.innerHTML = points.map(point => `<li>${point}</li>`).join('');
+    
+    showNotification('✅ Key points extracted!', 'success');
+
+  } catch (error) {
+    console.error('Key points error:', error);
+    keyPointsEl.innerHTML = `<li style="color:red; list-style:none;">❌ Failed: ${error.message}</li>`;
+    showNotification('❌ Failed to extract key points', 'error');
   }
-  if (text.length < 10) {
-    showNotification('Text too short. Please paste at least 10 characters.', 'warning');
-    return;
-  }
-  const tempDoc = {
-    name: 'Pasted Text',
-    size: (new Blob([text]).size / 1024).toFixed(2) + ' KB',
-    content: text,
-    wordCount: text.split(/\s+/).filter(w => w.length > 0).length
-  };
-  uploadedDocuments.push(tempDoc);
-  displayUploadedDocuments();
-  analyzeDocument(uploadedDocuments.length - 1);
 }
 
 async function askQuestion() {
-  if (!uploadedDocuments.length) {
-    showNotification('Please upload at least one document first', 'warning');
+  const question = document.getElementById('questionInput').value.trim();
+  
+  if (!uploadedDocument) {
+    showNotification('Please upload a document first!', 'warning');
     return;
   }
 
-  const question = document.getElementById('questionInput').value.trim();
   if (!question) {
-    showNotification('Please enter a question', 'warning');
+    showNotification('Please enter a question!', 'warning');
     return;
   }
 
   const qaResults = document.getElementById('qaResults');
-
-  // Add question
+  qaResults.style.display = 'block';
+  
   const questionDiv = document.createElement('div');
   questionDiv.className = 'qa-item question';
-  questionDiv.textContent = 'Q: ' + question;
+  questionDiv.textContent = `Q: ${question}`;
   qaResults.appendChild(questionDiv);
 
-  // Show loading
-  const loadingDiv = document.createElement('div');
-  loadingDiv.className = 'qa-item answer loading';
-  loadingDiv.innerHTML = '<div class="loading-dots">🤔 Thinking...</div>';
-  qaResults.appendChild(loadingDiv);
-
-  qaResults.scrollTop = qaResults.scrollHeight;
+  const answerDiv = document.createElement('div');
+  answerDiv.className = 'qa-item answer';
+  answerDiv.innerHTML = '⏳ Thinking...';
+  qaResults.appendChild(answerDiv);
 
   try {
-    // Join the text of all currently uploaded docs for context
-    const allDocsText = uploadedDocuments.map(doc => doc.content).join('\n\n---\n\n');
-
-    // Send to backend
-    const response = await fetch('https://ai-for-everyone-backend.onrender.com/api/analyze-document'
-, {
+    const response = await fetch(`${API_BASE_URL}/analyze-document`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `You have the following documents:\n\n${allDocsText}\n\nUser question: ${question}`,
-        type: "custom"
+        content: `Document:\n${uploadedDocument.content.substring(0, 10000)}\n\nQuestion: ${question}\n\nAnswer based on the document above:`,
+        type: uploadedDocument.type
       })
     });
 
-    if (!response.ok) throw new Error('Backend request failed');
+    if (!response.ok) {
+      throw new Error(`Backend error: ${response.status}`);
+    }
+
     const data = await response.json();
-    const answer = data.choices[0].message.content.trim();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format');
+    }
 
-    loadingDiv.remove();
-    const answerDiv = document.createElement('div');
-    answerDiv.className = 'qa-item answer';
-    answerDiv.innerHTML = 'A: ' + answer.replace(/\n/g, '<br>');
-    qaResults.appendChild(answerDiv);
-    qaResults.scrollTop = qaResults.scrollHeight;
+    const answer = data.choices[0].message.content;
+    answerDiv.innerHTML = `A: ${answer}`;
+    
+    document.getElementById('questionInput').value = '';
+    showNotification('✅ Answer generated!', 'success');
+
   } catch (error) {
-    loadingDiv.remove();
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'qa-item answer';
-    errorDiv.innerHTML = '<span style="color:#f44;">A: Error getting answer. Please try again.</span>';
-    qaResults.appendChild(errorDiv);
-  }
-
-  document.getElementById('questionInput').value = '';
-}
-
-
-function createAnalysisSection() {
-  let analysisSection = document.getElementById('analysisSection');
-  if (!analysisSection) {
-    analysisSection = document.createElement('div');
-    analysisSection.id = 'analysisSection';
-    analysisSection.className = 'analysis-section';
-    analysisSection.innerHTML = `
-      <div class="analysis-header">
-        <h2>Analysis Results</h2>
-        <button class="btn-secondary" onclick="clearAnalysis()">Clear</button>
-      </div>
-
-      <div class="analysis-grid">
-        <div class="info-card">
-          <div class="info-header">
-            <span class="info-icon">📋</span>
-            <h3>Document Info</h3>
-          </div>
-          <div class="info-content">
-            <div class="info-row">
-              <span class="info-label">File Name:</span>
-              <span class="info-value" id="docName">-</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">File Size:</span>
-              <span class="info-value" id="docSize">-</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Word Count:</span>
-              <span class="info-value" id="wordCount">-</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="result-card">
-          <div class="card-header">
-            <span class="card-icon">✨</span>
-            <h3>AI Summary</h3>
-          </div>
-          <div class="card-content">
-            <div id="summaryResult" class="result-text">Ready for analysis...</div>
-          </div>
-        </div>
-
-        <div class="result-card">
-          <div class="card-header">
-            <span class="card-icon">🎯</span>
-            <h3>Key Points</h3>
-          </div>
-          <div class="card-content">
-            <div id="keyPointsResult" class="result-text">Ready for analysis...</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="qa-section">
-        <h3>Ask Questions About This Document</h3>
-        <div class="qa-input-container">
-          <input type="text" id="questionInput" placeholder="What would you like to know?" onkeydown="handleQuestionKeyPress(event)">
-          <button class="btn-primary" onclick="askQuestion()">Ask</button>
-        </div>
-        <div id="qaResults" class="qa-results"></div>
-      </div>
-    `;
-    document.querySelector('.main-content').appendChild(analysisSection);
-  }
-  return analysisSection;
-}
-
-function handleQuestionKeyPress(event) {
-  if (event.key === 'Enter') {
-    askQuestion();
+    console.error('Q&A error:', error);
+    answerDiv.innerHTML = `<span style="color:red;">❌ Failed: ${error.message}</span>`;
+    showNotification('❌ Failed to answer question', 'error');
   }
 }
 
-function clearAnalysis() {
-  const analysisSection = document.getElementById('analysisSection');
-  if (analysisSection) analysisSection.style.display = 'none';
-  const uploadedSection = document.getElementById('uploadedSection');
-  if (uploadedSection) uploadedSection.remove();
-  uploadedDocuments = [];
-  window.currentAnalyzedDocument = null;
-  document.getElementById('pasteText').value = '';
-  document.getElementById('docFileInput').value = '';
-  showNotification('Analysis cleared', 'info');
-}
-
-// This replaces all Groq direct logic on the frontend!
-async function callAnalysisAPI(prompt) {
-  const response = await fetch('http://localhost:3000/api/analyze-document', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content: prompt, type: 'custom' })
+async function extractTextFromPDF(file) {
+  // Simple fallback - in production you'd use PDF.js
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const typedarray = new Uint8Array(e.target.result);
+      
+      try {
+        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+        
+        resolve(fullText);
+      } catch (error) {
+        reject(new Error('Failed to parse PDF: ' + error.message));
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsArrayBuffer(file);
   });
-  if (!response.ok) throw new Error('Analysis failed');
-  const data = await response.json();
-  return data.choices[0].message.content.trim();
 }
 
-function saveToHistory(type, input, output) {
-  let history = JSON.parse(localStorage.getItem('history') || '[]');
-  history.unshift({
-    type,
-    input,
-    output,
-    timestamp: new Date().toISOString()
-  });
-  localStorage.setItem('history', JSON.stringify(history.slice(0, 100)));
-  updateDashboardStats();
-}
-
-function updateDashboardStats() {
-  const history = JSON.parse(localStorage.getItem('history') || '[]');
-  const docCount = history.filter(h => h.type === 'document').length;
-  const chatCount = history.filter(h => h.type === 'chat').length;
-  const imageCount = history.filter(h => h.type === 'image').length;
-  const docEl = document.getElementById('docCount');
-  const chatEl = document.getElementById('chatCount');
-  const imageEl = document.getElementById('imageCount');
-  if (docEl) docEl.textContent = docCount;
-  if (chatEl) chatEl.textContent = chatCount;
-  if (imageEl) imageEl.textContent = imageCount;
-}
-
-function loadRecentDocs() {
-  const history = JSON.parse(localStorage.getItem('history') || '[]');
-  const docs = history.filter(h => h.type === 'document').slice(0, 5);
-  const container = document.getElementById('recentDocsList');
-  if (!container) return;
-  if (docs.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📂</div>
-        <p>No documents analyzed yet</p>
-      </div>
-    `;
-    return;
-  }
-  container.innerHTML = docs.map(doc => `
-    <div class="recent-doc-item">
-      <div class="doc-icon">📄</div>
-      <div class="doc-info">
-        <div class="doc-name">${doc.input}</div>
-        <div class="doc-date">${new Date(doc.timestamp).toLocaleString()}</div>
-      </div>
-    </div>
-  `).join('');
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
 
 function showNotification(message, type = 'info') {
   document.querySelectorAll('.notification').forEach(n => n.remove());
+  
   const notification = document.createElement('div');
   notification.className = `notification notification-${type}`;
   notification.textContent = message;
+  
   document.body.appendChild(notification);
   setTimeout(() => notification.classList.add('show'), 10);
+  
   setTimeout(() => {
     notification.classList.remove('show');
     setTimeout(() => notification.remove(), 300);
   }, 4000);
 }
 
-// Init on page load
-document.addEventListener('DOMContentLoaded', () => {
-  loadRecentDocs();
-  updateDashboardStats();
-});
+// Export functions
+window.uploadDocument = uploadDocument;
+window.analyzeDocument = analyzeDocument;
+window.extractKeyPoints = extractKeyPoints;
+window.askQuestion = askQuestion;
