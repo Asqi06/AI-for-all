@@ -11,30 +11,36 @@ async function uploadDocument() {
     return;
   }
 
-  // Show loading
   showNotification('📄 Processing document...', 'info');
 
   try {
     let content = '';
     
-    if (file.type === 'application/pdf') {
-      // Use PDF.js to extract text
-      content = await extractTextFromPDF(file);
-    } else if (file.type === 'text/plain') {
+    // Handle text files
+    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
       content = await file.text();
-    } else {
-      throw new Error('Unsupported file type. Please upload PDF or TXT files.');
+    } 
+    // Handle PDFs - simple extraction
+    else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      content = await extractTextFromPDF(file);
+    }
+    // Handle other text formats
+    else if (file.type.includes('text')) {
+      content = await file.text();
+    }
+    else {
+      throw new Error('Please upload a PDF or TXT file');
     }
 
-    if (!content || content.trim().length === 0) {
-      throw new Error('Could not extract text from document');
+    if (!content || content.trim().length < 10) {
+      throw new Error('Could not extract text from document. Make sure the PDF contains readable text.');
     }
 
     uploadedDocument = {
       name: file.name,
       type: file.type,
       size: file.size,
-      content: content,
+      content: content.trim(),
       uploadDate: new Date().toISOString()
     };
 
@@ -53,8 +59,12 @@ function displayDocumentInfo() {
   document.getElementById('documentInfo').style.display = 'block';
   document.getElementById('docName').textContent = uploadedDocument.name;
   document.getElementById('docSize').textContent = formatFileSize(uploadedDocument.size);
-  document.getElementById('docType').textContent = uploadedDocument.type;
+  document.getElementById('docType').textContent = uploadedDocument.type || 'Document';
   document.getElementById('docDate').textContent = new Date(uploadedDocument.uploadDate).toLocaleString();
+
+  // Show word count
+  const wordCount = uploadedDocument.content.split(/\s+/).length;
+  document.getElementById('docPages').textContent = `~${Math.ceil(wordCount / 250)} pages`;
 
   // Enable analysis buttons
   document.querySelectorAll('.analysis-section button').forEach(btn => {
@@ -69,7 +79,7 @@ async function analyzeDocument() {
   }
 
   const summaryEl = document.getElementById('summaryText');
-  summaryEl.innerHTML = '<p style="text-align:center;">⏳ Analyzing document... (may take 30-60 seconds on first request)</p>';
+  summaryEl.innerHTML = '<p style="text-align:center; color:#666;">⏳ Analyzing document... (may take 30-60 seconds)</p>';
   document.getElementById('analysisResults').style.display = 'block';
 
   try {
@@ -84,23 +94,23 @@ async function analyzeDocument() {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Backend error: ${response.status} - ${errorText}`);
+      throw new Error(`Backend error: ${response.status}`);
     }
 
     const data = await response.json();
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error('Invalid response format from API');
+      throw new Error('Invalid response from AI');
     }
 
     const analysis = data.choices[0].message.content;
-    summaryEl.innerHTML = analysis;
+    summaryEl.innerHTML = `<div style="line-height: 1.8;">${analysis}</div>`;
     
     showNotification('✅ Analysis complete!', 'success');
 
   } catch (error) {
     console.error('Analysis error:', error);
-    summaryEl.innerHTML = `<p style="color:red;">❌ Analysis failed: ${error.message}</p>`;
+    summaryEl.innerHTML = `<p style="color:#dc2626;">❌ Analysis failed: ${error.message}</p>`;
     showNotification('❌ Analysis failed: ' + error.message, 'error');
   }
 }
@@ -112,7 +122,7 @@ async function extractKeyPoints() {
   }
 
   const keyPointsEl = document.getElementById('keyPointsList');
-  keyPointsEl.innerHTML = '<li style="list-style:none;">⏳ Extracting key points...</li>';
+  keyPointsEl.innerHTML = '<li style="list-style:none; color:#666;">⏳ Extracting key points...</li>';
   document.getElementById('keyPointsCard').style.display = 'block';
 
   try {
@@ -120,7 +130,7 @@ async function extractKeyPoints() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `Extract 5-7 key points from this document in bullet format:\n\n${uploadedDocument.content.substring(0, 10000)}`,
+        content: `Extract 5-7 key bullet points from this document:\n\n${uploadedDocument.content.substring(0, 10000)}`,
         type: uploadedDocument.type
       })
     });
@@ -132,7 +142,7 @@ async function extractKeyPoints() {
     const data = await response.json();
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error('Invalid response format');
+      throw new Error('Invalid response');
     }
 
     const keyPoints = data.choices[0].message.content;
@@ -140,16 +150,20 @@ async function extractKeyPoints() {
     // Parse bullet points
     const points = keyPoints.split('\n')
       .filter(line => line.trim().length > 0)
-      .map(line => line.replace(/^[-*•]\s*/, '').trim())
-      .filter(line => line.length > 0);
+      .map(line => line.replace(/^[-*•\d.)\s]+/, '').trim())
+      .filter(line => line.length > 10);
 
-    keyPointsEl.innerHTML = points.map(point => `<li>${point}</li>`).join('');
+    if (points.length > 0) {
+      keyPointsEl.innerHTML = points.map(point => `<li>${point}</li>`).join('');
+    } else {
+      keyPointsEl.innerHTML = `<li style="list-style:none;">${keyPoints}</li>`;
+    }
     
     showNotification('✅ Key points extracted!', 'success');
 
   } catch (error) {
     console.error('Key points error:', error);
-    keyPointsEl.innerHTML = `<li style="color:red; list-style:none;">❌ Failed: ${error.message}</li>`;
+    keyPointsEl.innerHTML = `<li style="color:#dc2626; list-style:none;">❌ Failed: ${error.message}</li>`;
     showNotification('❌ Failed to extract key points', 'error');
   }
 }
@@ -185,7 +199,7 @@ async function askQuestion() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `Document:\n${uploadedDocument.content.substring(0, 10000)}\n\nQuestion: ${question}\n\nAnswer based on the document above:`,
+        content: `Document:\n${uploadedDocument.content.substring(0, 10000)}\n\nQuestion: ${question}\n\nProvide a clear answer based only on the document above:`,
         type: uploadedDocument.type
       })
     });
@@ -197,47 +211,56 @@ async function askQuestion() {
     const data = await response.json();
     
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error('Invalid response format');
+      throw new Error('Invalid response');
     }
 
     const answer = data.choices[0].message.content;
-    answerDiv.innerHTML = `A: ${answer}`;
+    answerDiv.innerHTML = `<strong>A:</strong> ${answer}`;
     
     document.getElementById('questionInput').value = '';
     showNotification('✅ Answer generated!', 'success');
 
   } catch (error) {
     console.error('Q&A error:', error);
-    answerDiv.innerHTML = `<span style="color:red;">❌ Failed: ${error.message}</span>`;
+    answerDiv.innerHTML = `<span style="color:#dc2626;">❌ Failed: ${error.message}</span>`;
     showNotification('❌ Failed to answer question', 'error');
   }
 }
 
+// Simple PDF text extraction
 async function extractTextFromPDF(file) {
-  // Simple fallback - in production you'd use PDF.js
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = async function(e) {
-      const typedarray = new Uint8Array(e.target.result);
+    
+    reader.onload = function(e) {
+      const contents = e.target.result;
       
+      // Try to extract text using simple string parsing
+      // This works for text-based PDFs (not scanned images)
       try {
-        const pdf = await pdfjsLib.getDocument(typedarray).promise;
-        let fullText = '';
+        let text = '';
+        const lines = contents.split('\n');
         
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map(item => item.str).join(' ');
-          fullText += pageText + '\n';
+        for (let line of lines) {
+          // Remove binary data and keep readable text
+          const cleanLine = line.replace(/[^\x20-\x7E]/g, ' ').trim();
+          if (cleanLine.length > 3) {
+            text += cleanLine + ' ';
+          }
         }
         
-        resolve(fullText);
-      } catch (error) {
-        reject(new Error('Failed to parse PDF: ' + error.message));
+        if (text.trim().length < 50) {
+          reject(new Error('PDF appears to be empty or image-based. Please use a text-based PDF.'));
+        } else {
+          resolve(text.trim());
+        }
+      } catch (err) {
+        reject(new Error('Failed to parse PDF'));
       }
     };
+    
     reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsArrayBuffer(file);
+    reader.readAsText(file);
   });
 }
 
