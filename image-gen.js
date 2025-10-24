@@ -64,24 +64,35 @@ async function enhancePrompt() {
   showNotification('✨ Enhancing prompt...', 'info');
   
   try {
-    const response = await fetch('https://ai-for-everyone-backend.onrender.com/api/generate-image'
-, {
+    const response = await fetch('https://ai-for-everyone-backend.onrender.com/api/enhance-prompt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: prompt })
     });
     
+    if (!response.ok) {
+      throw new Error(`Backend error: ${response.status}`);
+    }
+    
     const data = await response.json();
+    
+    // Check if data has the expected structure
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format from API');
+    }
+    
     const enhanced = data.choices[0].message.content.trim();
 
     document.getElementById('enhancedPromptText').textContent = enhanced;
     document.getElementById('enhancedPromptCard').style.display = 'block';
     showNotification('✨ Prompt enhanced!', 'success');
+    
   } catch (error) {
     console.error('Enhancement error:', error);
-    showNotification('Enhancement failed', 'error');
+    showNotification('❌ Enhancement failed: ' + error.message, 'error');
   }
 }
+
 
 function useEnhancedPrompt() {
   const enhanced = document.getElementById('enhancedPromptText').textContent;
@@ -100,9 +111,7 @@ async function generateImage() {
   const resultSection = document.getElementById('imageResultSection');
   const loadingSpinner = document.getElementById('loadingSpinner');
   const generatedImage = document.getElementById('generatedImage');
-  const providerInfo = document.getElementById('providerInfo');
 
-  // Store prompt for display
   document.getElementById('usedPrompt').textContent = prompt;
   document.getElementById('genTime').textContent = new Date().toLocaleString();
 
@@ -111,8 +120,9 @@ async function generateImage() {
   generatedImage.style.display = 'none';
 
   try {
-    const response = await fetch('https://ai-for-everyone-backend.onrender.com/api/generate-image'
-, {
+    showNotification('🎨 Generating image... (may take 10-30s)', 'info');
+
+    const response = await fetch('https://ai-for-everyone-backend.onrender.com/api/generate-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -121,28 +131,42 @@ async function generateImage() {
       })
     });
 
+    if (!response.ok) {
+      throw new Error(`Backend error: ${response.status}`);
+    }
+
     const data = await response.json();
     
     if (data.error) {
       throw new Error(data.error);
     }
 
-    // Display image
-    loadingSpinner.style.display = 'none';
-    generatedImage.src = data.imageUrl;
-    generatedImage.style.display = 'block';
-
-    // Show provider info
-    document.getElementById('usedProvider').textContent = data.provider || 'Unknown';
-    if (providerInfo) {
-      providerInfo.textContent = `Generated with ${data.provider}`;
-      providerInfo.style.display = 'block';
+    if (!data.imageUrl) {
+      throw new Error('No image URL received');
     }
 
-    saveToGallery(prompt, data.imageUrl, data.provider);
-    saveToHistory('image', prompt, data.imageUrl);
+    // Wait for image to load
+    const img = new Image();
+    img.onload = function() {
+      loadingSpinner.style.display = 'none';
+      generatedImage.src = data.imageUrl;
+      generatedImage.style.display = 'block';
+      
+      const providerName = data.provider || 'AI';
+      document.getElementById('usedProvider').textContent = providerName;
+      
+      saveToGallery(prompt, data.imageUrl, providerName);
+      saveToHistory('image', prompt, data.imageUrl);
+      
+      showNotification(`✅ Image generated with ${providerName}!`, 'success');
+    };
     
-    showNotification(`✅ Image generated with ${data.provider}!`, 'success');
+    img.onerror = function() {
+      loadingSpinner.style.display = 'none';
+      showNotification('❌ Failed to load generated image', 'error');
+    };
+    
+    img.src = data.imageUrl;
 
   } catch (error) {
     console.error('Generation error:', error);
