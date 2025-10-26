@@ -56,20 +56,31 @@ async function uploadDocument() {
 function displayDocumentInfo() {
   if (!uploadedDocument) return;
 
-  document.getElementById('documentInfo').style.display = 'block';
-  document.getElementById('docName').textContent = uploadedDocument.name;
-  document.getElementById('docSize').textContent = formatFileSize(uploadedDocument.size);
-  document.getElementById('docType').textContent = uploadedDocument.type || 'Document';
-  document.getElementById('docDate').textContent = new Date(uploadedDocument.uploadDate).toLocaleString();
+  // Safely get elements
+  const docInfo = document.getElementById('documentInfo');
+  const docName = document.getElementById('docName');
+  const docSize = document.getElementById('docSize');
+  const docType = document.getElementById('docType');
+  const docPages = document.getElementById('docPages');
 
-  // Show word count
+  // Update elements only if they exist
+  if (docInfo) docInfo.style.display = 'block';
+  if (docName) docName.textContent = uploadedDocument.name;
+  if (docSize) docSize.textContent = formatFileSize(uploadedDocument.size);
+  if (docType) docType.textContent = uploadedDocument.type || 'Document';
+  
+  // Calculate page count
   const wordCount = uploadedDocument.content.split(/\s+/).length;
-  document.getElementById('docPages').textContent = `~${Math.ceil(wordCount / 250)} pages`;
+  if (docPages) docPages.textContent = `~${Math.ceil(wordCount / 250)} pages`;
 
   // Enable analysis buttons
-  document.querySelectorAll('.analysis-section button').forEach(btn => {
-    btn.disabled = false;
+  const buttons = document.querySelectorAll('.analysis-section button, .qa-section button, .qa-section input');
+  buttons.forEach(btn => {
+    if (btn) btn.disabled = false;
   });
+  
+  // Show success message with document name
+  showNotification(`✅ "${uploadedDocument.name}" uploaded successfully!`, 'success');
 }
 
 async function analyzeDocument() {
