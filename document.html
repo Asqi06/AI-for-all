@@ -75,28 +75,27 @@
     <!-- Upload Section -->
 <div class="upload-section">
   <div class="upload-card">
-    <div class="upload-icon">📤</div>
-    <h2>Upload Documents (Max 7 files, 6MB total)</h2>
-    <p>Supports PDF, Word, and Text files. Upload multiple documents at once!</p>
+    <div class="upload-icon">📄</div>
+    <h2>Upload Your Document</h2>
+    <p>Supported formats: PDF, TXT (text-based PDFs only)</p>
     
-    <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.txt" multiple style="display:none" onchange="handleDocumentUpload(event)">
-    <button class="btn-primary" onclick="document.getElementById('docFileInput').click()">
-      Choose Files (Multiple)
+    <!-- File input with correct function -->
+    <input type="file" id="documentUpload" accept=".pdf,.txt" onchange="uploadDocument()" style="display:none;">
+    
+    <button class="btn-primary" onclick="document.getElementById('documentUpload').click()">
+      📂 Choose & Upload File
     </button>
-    
-    <div class="upload-stats">
-      <div class="stat">📁 Files: <span id="fileCount">0/7</span></div>
-      <div class="stat">💾 Size: <span id="totalSize">0/6MB</span></div>
-    </div>
     
     <div class="or-divider">OR</div>
     
     <div class="paste-section">
-      <textarea id="pasteText" placeholder="Paste your text here for quick analysis..." rows="6"></textarea>
-      <button class="btn-secondary" onclick="analyzeText()">Analyze Text</button>
+      <h3>Paste Text</h3>
+      <textarea id="pastedText" placeholder="Paste your text here..." rows="6"></textarea>
+      <button class="btn-primary" onclick="uploadPastedText()">📝 Analyze Text</button>
     </div>
   </div>
 </div>
+
 
 
     <!-- Analysis Result Section -->

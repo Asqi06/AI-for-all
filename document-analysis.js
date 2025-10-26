@@ -287,9 +287,41 @@ function showNotification(message, type = 'info') {
     setTimeout(() => notification.remove(), 300);
   }, 4000);
 }
+// Handle pasted text
+async function uploadPastedText() {
+  const text = document.getElementById('pastedText').value.trim();
+  
+  if (!text) {
+    showNotification('Please paste some text first!', 'warning');
+    return;
+  }
 
-// Export functions
+  if (text.length < 50) {
+    showNotification('Text is too short. Please paste at least 50 characters.', 'warning');
+    return;
+  }
+
+  showNotification('📄 Processing text...', 'info');
+
+  uploadedDocument = {
+    name: 'Pasted Text',
+    type: 'text/plain',
+    size: text.length,
+    content: text,
+    uploadDate: new Date().toISOString()
+  };
+
+  displayDocumentInfo();
+  showNotification('✅ Text uploaded successfully!', 'success');
+  
+  // Clear textarea
+  document.getElementById('pastedText').value = '';
+}
+
+// Export all functions
 window.uploadDocument = uploadDocument;
+window.uploadPastedText = uploadPastedText;
 window.analyzeDocument = analyzeDocument;
 window.extractKeyPoints = extractKeyPoints;
 window.askQuestion = askQuestion;
+
