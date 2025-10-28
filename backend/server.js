@@ -220,7 +220,7 @@ Always prioritize readability and visual appeal. Students should enjoy reading y
 
 // ========== DOCUMENT ANALYSIS ENDPOINT ==========
 app.post('/api/analyze-document', async (req, res) => {
-  req.setTimeout(120000); // 2 minutes timeout
+  req.setTimeout(120000);
   
   try {
     const { content, type } = req.body;
@@ -230,10 +230,48 @@ app.post('/api/analyze-document', async (req, res) => {
     }
 
     if (!GROQ_API_KEY) {
-      return res.status(500).json({ error: 'Groq API key is required' });
+      return res.status(500).json({ error: 'API key not configured' });
     }
 
     console.log('📄 Analyzing document...');
+
+    // Improved system prompt for clean output
+    const systemPrompt = `You are a professional document analyzer. Your job is to:
+
+1. Read and understand the CONTENT of the document (ignore PDF metadata, page numbers, headers/footers)
+2. Provide a clear, well-structured summary of what the document is ABOUT
+3. Format your analysis properly with sections
+
+FORMATTING RULES:
+- Use <h2> for main sections
+- Use <h3> for subsections
+- Use <p> for paragraphs (2-3 sentences max per paragraph)
+- Use <ul> and <li> for lists
+- Use <strong> for emphasis
+- Add proper spacing between sections
+
+STRUCTURE YOUR ANALYSIS LIKE THIS:
+
+<h2>📋 Document Overview</h2>
+<p>Brief 2-3 sentence summary of what this document is about.</p>
+
+<h2>🔍 Main Topics</h2>
+<ul>
+<li>Topic 1 and what it covers</li>
+<li>Topic 2 and what it covers</li>
+</ul>
+
+<h2>💡 Key Insights</h2>
+<p>Important points, findings, or conclusions from the document.</p>
+
+<h2>📊 Details</h2>
+<p>Any specific data, examples, or important information.</p>
+
+IMPORTANT:
+- Focus on CONTENT, not document structure
+- Ignore page numbers, headers, footers, PDF metadata
+- Write like you're explaining the document to a student
+- Be clear, concise, and well-organized`;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -242,25 +280,33 @@ app.post('/api/analyze-document', async (req, res) => {
         'Authorization': `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'llama-3.1-8b-instant',
         messages: [
           {
             role: 'system',
-            content: 'You are a document analysis expert. Analyze the given document and provide a clear summary, key points, and insights.'
+            content: systemPrompt
           },
           {
             role: 'user',
-            content: `Analyze this document:\n\n${content.substring(0, 15000)}`
+            content: `Analyze this document and provide a clean, well-formatted summary:\n\n${content.substring(0, 8000)}`
           }
         ],
         temperature: 0.7,
-        max_tokens: 2048
+        max_tokens: 1500
       })
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Groq API error: ${errorData}`);
+      const errorData = await response.json();
+      
+      if (errorData.error?.code === 'rate_limit_exceeded') {
+        return res.status(429).json({ 
+          error: 'Rate limit reached. Please wait 30 seconds.',
+          retryAfter: 30
+        });
+      }
+      
+      throw new Error(errorData.error?.message || 'API error');
     }
 
     const data = await response.json();
@@ -275,6 +321,7 @@ app.post('/api/analyze-document', async (req, res) => {
     });
   }
 });
+
 
 // ========== START SERVER ==========
 app.listen(PORT, () => {
