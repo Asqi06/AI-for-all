@@ -1,9 +1,7 @@
-// Use a unique variable name to avoid conflicts
 const DOC_API_BASE_URL = 'https://ai-for-everyone-backend.onrender.com/api';
 
 let uploadedDocument = null;
 
-// Make functions global immediately
 window.uploadDocument = async function() {
   const fileInput = document.getElementById('documentUpload');
   
@@ -19,17 +17,20 @@ window.uploadDocument = async function() {
     return;
   }
 
-  showDocNotification('📄 Processing document...', 'info');
+  showDocNotification('📄 Processing document... This may take a moment.', 'info');
 
   try {
     let content = '';
     
+    // Handle text files
     if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
       content = await file.text();
     } 
+    // Handle PDFs with PDF.js
     else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
       content = await extractTextFromPDF(file);
     }
+    // Handle other text formats
     else if (file.type.includes('text')) {
       content = await file.text();
     }
@@ -73,7 +74,7 @@ function displayDocumentInfo() {
   if (docType) docType.textContent = uploadedDocument.type || 'Document';
   
   const wordCount = uploadedDocument.content.split(/\s+/).length;
-  if (docPages) docPages.textContent = `~${Math.ceil(wordCount / 250)} pages`;
+  if (docPages) docPages.textContent = `~${Math.ceil(wordCount / 250)} pages (${wordCount} words)`;
   if (docDate) docDate.textContent = new Date(uploadedDocument.uploadDate).toLocaleString();
 
   const buttons = document.querySelectorAll('.analysis-section button, .qa-section button');
@@ -82,7 +83,7 @@ function displayDocumentInfo() {
   buttons.forEach(btn => { if (btn) btn.disabled = false; });
   inputs.forEach(inp => { if (inp) inp.disabled = false; });
   
-  showDocNotification(`✅ "${uploadedDocument.name}" ready for analysis!`, 'success');
+  showDocNotification(`✅ "${uploadedDocument.name}" ready! (${wordCount} words extracted)`, 'success');
 }
 
 window.analyzeDocument = async function() {
@@ -156,18 +157,7 @@ window.extractKeyPoints = async function() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `Read this document and extract 5-7 key points about its CONTENT (ignore page numbers, headers, PDF metadata).
-
-Focus on:
-- Main topics discussed
-- Important facts or findings
-- Key conclusions or recommendations
-- Significant data or examples
-
-Format as simple bullet points (one point per line, no numbering).
-
-Document:
-${uploadedDocument.content.substring(0, 10000)}`,
+        content: `Extract 5-7 key points about the CONTENT:\n\n${uploadedDocument.content.substring(0, 10000)}`,
         type: uploadedDocument.type
       })
     });
@@ -187,7 +177,7 @@ ${uploadedDocument.content.substring(0, 10000)}`,
     const points = keyPoints.split('\n')
       .filter(line => line.trim().length > 0)
       .map(line => line.replace(/^[-*•\d.)\s]+/, '').trim())
-      .filter(line => line.length > 10);
+      .filter(line => line.length > 15);
 
     if (points.length > 0) {
       keyPointsEl.innerHTML = points.map(point => `<li>${point}</li>`).join('');
@@ -304,36 +294,38 @@ window.uploadPastedText = async function() {
   textArea.value = '';
 };
 
+// Proper PDF text extraction using PDF.js
 async function extractTextFromPDF(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-      const contents = e.target.result;
+  return new Promise(async (resolve, reject) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const typedArray = new Uint8Array(arrayBuffer);
       
-      try {
-        let text = '';
-        const lines = contents.split('\n');
+      const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
+      
+      let fullText = '';
+      
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
         
-        for (let line of lines) {
-          const cleanLine = line.replace(/[^\x20-\x7E]/g, ' ').trim();
-          if (cleanLine.length > 3) {
-            text += cleanLine + ' ';
-          }
-        }
+        const pageText = textContent.items
+          .map(item => item.str)
+          .join(' ');
         
-        if (text.trim().length < 50) {
-          reject(new Error('PDF appears empty or image-based. Use text-based PDF.'));
-        } else {
-          resolve(text.trim());
-        }
-      } catch (err) {
-        reject(new Error('Failed to parse PDF'));
+        fullText += pageText + '\n\n';
       }
-    };
-    
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsText(file);
+      
+      if (fullText.trim().length < 50) {
+        reject(new Error('PDF appears to be empty or image-based. Use a text-based PDF.'));
+      } else {
+        resolve(fullText.trim());
+      }
+      
+    } catch (error) {
+      console.error('PDF extraction error:', error);
+      reject(new Error('Failed to extract text from PDF.'));
+    }
   });
 }
 
@@ -346,7 +338,6 @@ function formatFileSize(bytes) {
 }
 
 function showDocNotification(message, type = 'info') {
-  // Remove existing notifications
   document.querySelectorAll('.notification').forEach(n => n.remove());
   
   const notification = document.createElement('div');
