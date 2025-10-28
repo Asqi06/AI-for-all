@@ -1,115 +1,172 @@
 const DOC_API_BASE_URL = 'https://ai-for-everyone-backend.onrender.com/api';
 
-let uploadedDocument = null;
+let uploadedDocuments = []; // Array to store multiple documents
+const MAX_FILES = 7;
+const MAX_TOTAL_SIZE = 6 * 1024 * 1024; // 6MB in bytes
 
-window.uploadDocument = async function() {
+window.uploadDocuments = async function() {
   const fileInput = document.getElementById('documentUpload');
   
-  if (!fileInput) {
-    console.error('File input not found');
+  if (!fileInput || !fileInput.files.length) {
+    showDocNotification('Please select files!', 'warning');
     return;
   }
   
-  const file = fileInput.files[0];
-
-  if (!file) {
-    showDocNotification('Please select a file!', 'warning');
+  const files = Array.from(fileInput.files);
+  
+  // Validate file count
+  if (files.length > MAX_FILES) {
+    showDocNotification(`Maximum ${MAX_FILES} files allowed!`, 'error');
     return;
   }
-
-  showDocNotification('📄 Processing document... This may take a moment.', 'info');
-
+  
+  // Validate total size
+  const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+  if (totalSize > MAX_TOTAL_SIZE) {
+    showDocNotification(`Total size exceeds 6MB limit! Current: ${formatFileSize(totalSize)}`, 'error');
+    return;
+  }
+  
+  showDocNotification(`📄 Processing ${files.length} file(s)...`, 'info');
+  
+  uploadedDocuments = []; // Clear previous uploads
+  
   try {
-    let content = '';
+    for (const file of files) {
+      let content = '';
+      
+      if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+        content = await file.text();
+      } 
+      else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        content = await extractTextFromPDF(file);
+      }
+      else {
+        throw new Error(`Unsupported file type: ${file.name}`);
+      }
+      
+      if (content.trim().length < 10) {
+        throw new Error(`No text found in: ${file.name}`);
+      }
+      
+      uploadedDocuments.push({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        content: content.trim(),
+        uploadDate: new Date().toISOString()
+      });
+    }
     
-    // Handle text files
-    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
-      content = await file.text();
-    } 
-    // Handle PDFs with PDF.js
-    else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-      content = await extractTextFromPDF(file);
-    }
-    // Handle other text formats
-    else if (file.type.includes('text')) {
-      content = await file.text();
-    }
-    else {
-      throw new Error('Please upload a PDF or TXT file');
-    }
-
-    if (!content || content.trim().length < 10) {
-      throw new Error('Could not extract text. Make sure the file contains readable text.');
-    }
-
-    uploadedDocument = {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      content: content.trim(),
-      uploadDate: new Date().toISOString()
-    };
-
-    displayDocumentInfo();
-
+    displayDocumentsList();
+    showDocNotification(`✅ ${uploadedDocuments.length} file(s) uploaded successfully!`, 'success');
+    
   } catch (error) {
     console.error('Upload error:', error);
-    showDocNotification('❌ Upload failed: ' + error.message, 'error');
+    showDocNotification('❌ ' + error.message, 'error');
   }
 };
 
-function displayDocumentInfo() {
-  if (!uploadedDocument) return;
-
-  const docInfo = document.getElementById('documentInfo');
-  const docName = document.getElementById('docName');
-  const docSize = document.getElementById('docSize');
-  const docType = document.getElementById('docType');
-  const docPages = document.getElementById('docPages');
-  const docDate = document.getElementById('docDate');
-
-  if (docInfo) docInfo.style.display = 'block';
-  if (docName) docName.textContent = uploadedDocument.name;
-  if (docSize) docSize.textContent = formatFileSize(uploadedDocument.size);
-  if (docType) docType.textContent = uploadedDocument.type || 'Document';
+function displayDocumentsList() {
+  if (uploadedDocuments.length === 0) return;
   
-  const wordCount = uploadedDocument.content.split(/\s+/).length;
-  if (docPages) docPages.textContent = `~${Math.ceil(wordCount / 250)} pages (${wordCount} words)`;
-  if (docDate) docDate.textContent = new Date(uploadedDocument.uploadDate).toLocaleString();
-
-  const buttons = document.querySelectorAll('.analysis-section button, .qa-section button');
-  const inputs = document.querySelectorAll('.qa-section input');
+  const listSection = document.getElementById('documentsListSection');
+  const documentsList = document.getElementById('documentsList');
+  const docCount = document.getElementById('docCount');
+  const totalSize = document.getElementById('totalSize');
+  const totalWords = document.getElementById('totalWords');
   
-  buttons.forEach(btn => { if (btn) btn.disabled = false; });
-  inputs.forEach(inp => { if (inp) inp.disabled = false; });
+  if (!documentsList) return;
   
-  showDocNotification(`✅ "${uploadedDocument.name}" ready! (${wordCount} words extracted)`, 'success');
+  listSection.style.display = 'block';
+  docCount.textContent = uploadedDocuments.length;
+  
+  const totalSizeBytes = uploadedDocuments.reduce((sum, doc) => sum + doc.size, 0);
+  const totalWordCount = uploadedDocuments.reduce((sum, doc) => 
+    sum + doc.content.split(/\s+/).length, 0);
+  
+  totalSize.textContent = formatFileSize(totalSizeBytes);
+  totalWords.textContent = totalWordCount.toLocaleString();
+  
+  documentsList.innerHTML = uploadedDocuments.map((doc, index) => {
+    const wordCount = doc.content.split(/\s+/).length;
+    return `
+      <div class="doc-card">
+        <div class="doc-card-header">
+          <span class="doc-icon">📄</span>
+          <span class="doc-name" title="${doc.name}">${doc.name}</span>
+          <button class="btn-icon-delete" onclick="removeDocument(${index})" title="Remove">
+            ×
+          </button>
+        </div>
+        <div class="doc-card-info">
+          <span>${formatFileSize(doc.size)}</span>
+          <span>•</span>
+          <span>${wordCount} words</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // Enable analysis buttons
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('keyPointsBtn').disabled = false;
+  document.getElementById('questionInput').disabled = false;
+  document.getElementById('askBtn').disabled = false;
 }
 
-window.analyzeDocument = async function() {
-  if (!uploadedDocument) {
-    showDocNotification('Please upload a document first!', 'warning');
+window.removeDocument = function(index) {
+  uploadedDocuments.splice(index, 1);
+  
+  if (uploadedDocuments.length === 0) {
+    document.getElementById('documentsListSection').style.display = 'none';
+    document.getElementById('analyzeBtn').disabled = true;
+    document.getElementById('keyPointsBtn').disabled = true;
+    document.getElementById('questionInput').disabled = true;
+    document.getElementById('askBtn').disabled = true;
+  } else {
+    displayDocumentsList();
+  }
+  
+  showDocNotification('Document removed', 'info');
+};
+
+window.clearAllDocuments = function() {
+  uploadedDocuments = [];
+  document.getElementById('documentsListSection').style.display = 'none';
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('keyPointsBtn').disabled = true;
+  document.getElementById('questionInput').disabled = true;
+  document.getElementById('askBtn').disabled = true;
+  showDocNotification('All documents cleared', 'info');
+};
+
+window.analyzeDocuments = async function() {
+  if (uploadedDocuments.length === 0) {
+    showDocNotification('Please upload documents first!', 'warning');
     return;
   }
 
   const summaryEl = document.getElementById('summaryText');
   const resultsDiv = document.getElementById('analysisResults');
   
-  if (!summaryEl) {
-    showDocNotification('Analysis section not found', 'error');
-    return;
-  }
+  if (!summaryEl) return;
 
-  summaryEl.innerHTML = '<p style="text-align:center; color:#666;">⏳ Analyzing (30-60 seconds)...</p>';
-  if (resultsDiv) resultsDiv.style.display = 'block';
+  summaryEl.innerHTML = '<p style="text-align:center; color:#666;">⏳ Analyzing all documents (may take 60-90 seconds)...</p>';
+  resultsDiv.style.display = 'block';
 
   try {
+    // Combine all document contents with labels
+    const combinedContent = uploadedDocuments.map((doc, index) => 
+      `[Document ${index + 1}: ${doc.name}]\n${doc.content}\n\n`
+    ).join('---\n\n');
+    
     const response = await fetch(`${DOC_API_BASE_URL}/analyze-document`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: uploadedDocument.content,
-        type: uploadedDocument.type
+        content: combinedContent.substring(0, 15000), // Limit to 15k chars
+        type: 'multiple-documents'
       })
     });
 
@@ -130,35 +187,36 @@ window.analyzeDocument = async function() {
 
   } catch (error) {
     console.error('Analysis error:', error);
-    summaryEl.innerHTML = `<p style="color:#dc2626;">❌ Analysis failed: ${error.message}</p>`;
+    summaryEl.innerHTML = `<p style="color:#dc2626;">❌ ${error.message}</p>`;
     showDocNotification('❌ ' + error.message, 'error');
   }
 };
 
 window.extractKeyPoints = async function() {
-  if (!uploadedDocument) {
-    showDocNotification('Please upload a document first!', 'warning');
+  if (uploadedDocuments.length === 0) {
+    showDocNotification('Please upload documents first!', 'warning');
     return;
   }
 
   const keyPointsEl = document.getElementById('keyPointsList');
   const keyPointsCard = document.getElementById('keyPointsCard');
   
-  if (!keyPointsEl) {
-    showDocNotification('Key points section not found', 'error');
-    return;
-  }
+  if (!keyPointsEl) return;
 
-  keyPointsEl.innerHTML = '<li style="list-style:none; color:#666;">⏳ Extracting...</li>';
-  if (keyPointsCard) keyPointsCard.style.display = 'block';
+  keyPointsEl.innerHTML = '<li style="list-style:none; color:#666;">⏳ Extracting key points...</li>';
+  keyPointsCard.style.display = 'block';
 
   try {
+    const combinedContent = uploadedDocuments.map((doc, index) => 
+      `[${doc.name}]\n${doc.content}\n\n`
+    ).join('---\n\n');
+    
     const response = await fetch(`${DOC_API_BASE_URL}/analyze-document`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `Extract 5-7 key points about the CONTENT:\n\n${uploadedDocument.content.substring(0, 10000)}`,
-        type: uploadedDocument.type
+        content: `Extract 7-10 key points from these documents:\n\n${combinedContent.substring(0, 12000)}`,
+        type: 'key-points'
       })
     });
 
@@ -198,15 +256,12 @@ window.askQuestion = async function() {
   const questionInput = document.getElementById('questionInput');
   const qaResults = document.getElementById('qaResults');
   
-  if (!questionInput || !qaResults) {
-    showDocNotification('Q&A section not found', 'error');
-    return;
-  }
+  if (!questionInput || !qaResults) return;
   
   const question = questionInput.value.trim();
   
-  if (!uploadedDocument) {
-    showDocNotification('Please upload a document first!', 'warning');
+  if (uploadedDocuments.length === 0) {
+    showDocNotification('Please upload documents first!', 'warning');
     return;
   }
 
@@ -224,16 +279,20 @@ window.askQuestion = async function() {
 
   const answerDiv = document.createElement('div');
   answerDiv.className = 'qa-item answer';
-  answerDiv.innerHTML = '⏳ Thinking...';
+  answerDiv.innerHTML = '⏳ Searching through all documents...';
   qaResults.appendChild(answerDiv);
 
   try {
+    const combinedContent = uploadedDocuments.map((doc, index) => 
+      `[Document ${index + 1}: ${doc.name}]\n${doc.content}\n\n`
+    ).join('---\n\n');
+    
     const response = await fetch(`${DOC_API_BASE_URL}/analyze-document`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `Document:\n${uploadedDocument.content.substring(0, 10000)}\n\nQuestion: ${question}\n\nAnswer:`,
-        type: uploadedDocument.type
+        content: `Documents:\n${combinedContent.substring(0, 12000)}\n\nQuestion: ${question}\n\nAnswer based on the documents:`,
+        type: 'qa'
       })
     });
 
@@ -262,11 +321,7 @@ window.askQuestion = async function() {
 
 window.uploadPastedText = async function() {
   const textArea = document.getElementById('pastedText');
-  
-  if (!textArea) {
-    showDocNotification('Paste area not found', 'error');
-    return;
-  }
+  if (!textArea) return;
   
   const text = textArea.value.trim();
   
@@ -276,25 +331,23 @@ window.uploadPastedText = async function() {
   }
 
   if (text.length < 50) {
-    showDocNotification('Text is too short. Need at least 50 characters.', 'warning');
+    showDocNotification('Text is too short.', 'warning');
     return;
   }
 
-  showDocNotification('📄 Processing text...', 'info');
-
-  uploadedDocument = {
+  uploadedDocuments = [{
     name: 'Pasted Text',
     type: 'text/plain',
     size: text.length,
     content: text,
     uploadDate: new Date().toISOString()
-  };
+  }];
 
-  displayDocumentInfo();
+  displayDocumentsList();
   textArea.value = '';
+  showDocNotification('✅ Text uploaded!', 'success');
 };
 
-// Proper PDF text extraction using PDF.js
 async function extractTextFromPDF(file) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -317,7 +370,7 @@ async function extractTextFromPDF(file) {
       }
       
       if (fullText.trim().length < 50) {
-        reject(new Error('PDF appears to be empty or image-based. Use a text-based PDF.'));
+        reject(new Error('PDF appears to be empty or image-based.'));
       } else {
         resolve(fullText.trim());
       }

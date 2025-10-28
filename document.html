@@ -6,17 +6,16 @@
   <title>Document Analysis - AI For Everyone</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <!-- PDF.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
-    // Configure PDF.js worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   </script>
 </head>
 <body class="dashboard-body">
   <!-- Mobile Menu Button -->
   <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
-
-  <!-- Sidebar Overlay -->
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
   <!-- Sidebar -->
@@ -70,7 +69,7 @@
     <header class="dashboard-header">
       <div>
         <h1>📄 Document Analysis</h1>
-        <p>Upload documents and get AI-powered insights</p>
+        <p>Upload multiple documents (up to 7 PDFs, max 6MB total)</p>
       </div>
     </header>
 
@@ -78,13 +77,25 @@
     <div class="upload-section">
       <div class="upload-card">
         <div class="upload-icon">📄</div>
-        <h2>Upload Your Document</h2>
-        <p>Supported formats: PDF, TXT (text-based PDFs only)</p>
+        <h2>Upload Your Documents</h2>
+        <p>Upload up to 7 PDF/TXT files (6MB total limit)</p>
         
-        <input type="file" id="documentUpload" accept=".pdf,.txt" onchange="uploadDocument()" style="display:none;">
+        <!-- Multiple file input -->
+        <input 
+          type="file" 
+          id="documentUpload" 
+          accept=".pdf,.txt" 
+          multiple
+          onchange="uploadDocuments()" 
+          style="display:none;"
+        >
         <button class="btn-primary large" onclick="document.getElementById('documentUpload').click()">
-          📂 Choose & Upload File
+          📂 Choose Files (Max 7)
         </button>
+        
+        <div class="upload-info">
+          <span id="uploadStatus">No files selected</span>
+        </div>
         
         <div class="or-divider">
           <span>OR</span>
@@ -98,32 +109,16 @@
       </div>
     </div>
 
-    <!-- Document Info Display (THIS WAS MISSING!) -->
-    <div id="documentInfo" class="document-info-section" style="display:none;">
-      <div class="info-card">
-        <h3>📄 Uploaded Document</h3>
-        <div class="doc-details-grid">
-          <div class="doc-detail-item">
-            <span class="detail-label">📋 Name:</span>
-            <span class="detail-value" id="docName">-</span>
-          </div>
-          <div class="doc-detail-item">
-            <span class="detail-label">💾 Size:</span>
-            <span class="detail-value" id="docSize">-</span>
-          </div>
-          <div class="doc-detail-item">
-            <span class="detail-label">📑 Type:</span>
-            <span class="detail-value" id="docType">-</span>
-          </div>
-          <div class="doc-detail-item">
-            <span class="detail-label">📄 Pages:</span>
-            <span class="detail-value" id="docPages">-</span>
-          </div>
-          <div class="doc-detail-item">
-            <span class="detail-label">🕒 Uploaded:</span>
-            <span class="detail-value" id="docDate">-</span>
-          </div>
-        </div>
+    <!-- Uploaded Documents List -->
+    <div id="documentsListSection" class="documents-list-section" style="display:none;">
+      <div class="section-header">
+        <h3>📚 Uploaded Documents (<span id="docCount">0</span>)</h3>
+        <button class="btn-secondary small" onclick="clearAllDocuments()">🗑️ Clear All</button>
+      </div>
+      <div id="documentsList" class="documents-grid"></div>
+      <div class="total-info">
+        <span>Total Size: <strong id="totalSize">0 KB</strong></span>
+        <span>Total Words: <strong id="totalWords">0</strong></span>
       </div>
     </div>
 
@@ -132,10 +127,10 @@
       <div class="section-header">
         <h2>📊 Analysis Options</h2>
         <div class="button-group">
-          <button class="btn-primary" onclick="analyzeDocument()" disabled>
+          <button class="btn-primary" onclick="analyzeDocuments()" disabled id="analyzeBtn">
             ✨ AI Summary
           </button>
-          <button class="btn-secondary" onclick="extractKeyPoints()" disabled>
+          <button class="btn-secondary" onclick="extractKeyPoints()" disabled id="keyPointsBtn">
             🔑 Key Points
           </button>
         </div>
@@ -144,7 +139,7 @@
       <!-- Summary Results -->
       <div id="analysisResults" class="result-card" style="display:none;">
         <div class="card-header">
-          <h3><span class="icon">📝</span> AI Summary</h3>
+          <h3><span class="icon">📝</span> Combined AI Summary</h3>
         </div>
         <div id="summaryText" class="result-content"></div>
       </div>
@@ -152,7 +147,7 @@
       <!-- Key Points Results -->
       <div id="keyPointsCard" class="result-card" style="display:none;">
         <div class="card-header">
-          <h3><span class="icon">🔑</span> Key Points</h3>
+          <h3><span class="icon">🔑</span> Key Points from All Documents</h3>
         </div>
         <ul id="keyPointsList" class="key-points-list"></ul>
       </div>
@@ -160,15 +155,15 @@
 
     <!-- Q&A Section -->
     <div class="qa-section">
-      <h3>❓ Ask Questions About This Document</h3>
+      <h3>❓ Ask Questions About Your Documents</h3>
       <div class="qa-input-group">
         <input 
           type="text" 
           id="questionInput" 
-          placeholder="Ask a question about the document..." 
+          placeholder="Ask about any of your uploaded documents..." 
           disabled
         >
-        <button class="btn-primary" onclick="askQuestion()" disabled>
+        <button class="btn-primary" onclick="askQuestion()" disabled id="askBtn">
           Ask
         </button>
       </div>
