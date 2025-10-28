@@ -156,7 +156,18 @@ window.extractKeyPoints = async function() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: `Extract 5-7 key bullet points:\n\n${uploadedDocument.content.substring(0, 10000)}`,
+        content: `Read this document and extract 5-7 key points about its CONTENT (ignore page numbers, headers, PDF metadata).
+
+Focus on:
+- Main topics discussed
+- Important facts or findings
+- Key conclusions or recommendations
+- Significant data or examples
+
+Format as simple bullet points (one point per line, no numbering).
+
+Document:
+${uploadedDocument.content.substring(0, 10000)}`,
         type: uploadedDocument.type
       })
     });
