@@ -9,11 +9,10 @@
 </head>
 <body class="dashboard-body">
   <!-- Mobile Menu Button -->
-<button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+  <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
 
-<!-- Sidebar Overlay -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
   <!-- Sidebar -->
   <aside class="sidebar">
@@ -43,12 +42,10 @@
         <span class="nav-icon">🕒</span>
         History
       </a>
-      <!-- In sidebar-nav section, add this -->
-<a href="settings.html" class="nav-item">
-  <span class="nav-icon">⚙️</span>
-  Settings
-</a>
-
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        Settings
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -68,116 +65,114 @@
     <header class="dashboard-header">
       <div>
         <h1>📄 Document Analysis</h1>
-        <p>Upload documents and get instant AI-powered insights</p>
+        <p>Upload documents and get AI-powered insights</p>
       </div>
     </header>
 
     <!-- Upload Section -->
-<div class="upload-section">
-  <div class="upload-card">
-    <div class="upload-icon">📄</div>
-    <h2>Upload Your Document</h2>
-    <p>Supported formats: PDF, TXT (text-based PDFs only)</p>
-    
-    <!-- File input with correct function -->
-    <input type="file" id="documentUpload" accept=".pdf,.txt" onchange="uploadDocument()" style="display:none;">
-    
-    <button class="btn-primary" onclick="document.getElementById('documentUpload').click()">
-      📂 Choose & Upload File
-    </button>
-    
-    <div class="or-divider">OR</div>
-    
-    <div class="paste-section">
-      <h3>Paste Text</h3>
-      <textarea id="pastedText" placeholder="Paste your text here..." rows="6"></textarea>
-      <button class="btn-primary" onclick="uploadPastedText()">📝 Analyze Text</button>
-    </div>
-  </div>
-</div>
-
-
-
-    <!-- Analysis Result Section -->
-    <div id="analysisSection" class="analysis-section" style="display:none;">
-      <div class="analysis-header">
-        <h2>Analysis Results</h2>
-        <button class="btn-secondary" onclick="clearAnalysis()">New Analysis</button>
-      </div>
-
-      <div class="analysis-grid">
-        <!-- Document Info Card -->
-        <div class="info-card">
-          <div class="info-header">
-            <span class="info-icon">📋</span>
-            <h3>Document Info</h3>
-          </div>
-          <div class="info-content">
-            <div class="info-row">
-              <span class="info-label">File Name:</span>
-              <span class="info-value" id="docName">-</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">File Size:</span>
-              <span class="info-value" id="docSize">-</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Word Count:</span>
-              <span class="info-value" id="wordCount">-</span>
-            </div>
-          </div>
+    <div class="upload-section">
+      <div class="upload-card">
+        <div class="upload-icon">📄</div>
+        <h2>Upload Your Document</h2>
+        <p>Supported formats: PDF, TXT (text-based PDFs only)</p>
+        
+        <input type="file" id="documentUpload" accept=".pdf,.txt" onchange="uploadDocument()" style="display:none;">
+        <button class="btn-primary large" onclick="document.getElementById('documentUpload').click()">
+          📂 Choose & Upload File
+        </button>
+        
+        <div class="or-divider">
+          <span>OR</span>
         </div>
-
-        <!-- Summary Card -->
-        <div class="result-card">
-          <div class="card-header">
-            <span class="card-icon">✨</span>
-            <h3>AI Summary</h3>
-          </div>
-          <div class="card-content">
-            <div id="summaryResult" class="result-text">Analyzing...</div>
-          </div>
+        
+        <div class="paste-section">
+          <h3>Paste Text Directly</h3>
+          <textarea id="pastedText" placeholder="Paste your document text here..." rows="6"></textarea>
+          <button class="btn-primary" onclick="uploadPastedText()">📝 Analyze Pasted Text</button>
         </div>
-
-        <!-- Key Points Card -->
-        <div class="result-card">
-          <div class="card-header">
-            <span class="card-icon">🎯</span>
-            <h3>Key Points</h3>
-          </div>
-          <div class="card-content">
-            <div id="keyPointsResult" class="result-text">Extracting key points...</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Q&A Section -->
-      <div class="qa-section">
-        <h3>Ask Questions About This Document</h3>
-        <div class="qa-input-container">
-          <input type="text" id="questionInput" placeholder="What would you like to know about this document?" onkeydown="handleQuestionKeyPress(event)">
-          <button class="btn-primary" onclick="askQuestion()">Ask</button>
-        </div>
-        <div id="qaResults" class="qa-results"></div>
       </div>
     </div>
 
-    <!-- Recent Documents -->
-    <div class="recent-docs-section">
-      <h2>Recent Documents</h2>
-      <div id="recentDocsList" class="recent-docs-list">
-        <div class="empty-state">
-          <div class="empty-icon">📂</div>
-          <p>No documents analyzed yet</p>
+    <!-- Document Info Display (THIS WAS MISSING!) -->
+    <div id="documentInfo" class="document-info-section" style="display:none;">
+      <div class="info-card">
+        <h3>📄 Uploaded Document</h3>
+        <div class="doc-details-grid">
+          <div class="doc-detail-item">
+            <span class="detail-label">📋 Name:</span>
+            <span class="detail-value" id="docName">-</span>
+          </div>
+          <div class="doc-detail-item">
+            <span class="detail-label">💾 Size:</span>
+            <span class="detail-value" id="docSize">-</span>
+          </div>
+          <div class="doc-detail-item">
+            <span class="detail-label">📑 Type:</span>
+            <span class="detail-value" id="docType">-</span>
+          </div>
+          <div class="doc-detail-item">
+            <span class="detail-label">📄 Pages:</span>
+            <span class="detail-value" id="docPages">-</span>
+          </div>
+          <div class="doc-detail-item">
+            <span class="detail-label">🕒 Uploaded:</span>
+            <span class="detail-value" id="docDate">-</span>
+          </div>
         </div>
       </div>
+    </div>
+
+    <!-- Analysis Section -->
+    <div class="analysis-section">
+      <div class="section-header">
+        <h2>📊 Analysis Options</h2>
+        <div class="button-group">
+          <button class="btn-primary" onclick="analyzeDocument()" disabled>
+            ✨ AI Summary
+          </button>
+          <button class="btn-secondary" onclick="extractKeyPoints()" disabled>
+            🔑 Key Points
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary Results -->
+      <div id="analysisResults" class="result-card" style="display:none;">
+        <div class="card-header">
+          <h3><span class="icon">📝</span> AI Summary</h3>
+        </div>
+        <div id="summaryText" class="result-content"></div>
+      </div>
+
+      <!-- Key Points Results -->
+      <div id="keyPointsCard" class="result-card" style="display:none;">
+        <div class="card-header">
+          <h3><span class="icon">🔑</span> Key Points</h3>
+        </div>
+        <ul id="keyPointsList" class="key-points-list"></ul>
+      </div>
+    </div>
+
+    <!-- Q&A Section -->
+    <div class="qa-section">
+      <h3>❓ Ask Questions About This Document</h3>
+      <div class="qa-input-group">
+        <input 
+          type="text" 
+          id="questionInput" 
+          placeholder="Ask a question about the document..." 
+          disabled
+        >
+        <button class="btn-primary" onclick="askQuestion()" disabled>
+          Ask
+        </button>
+      </div>
+      <div id="qaResults" class="qa-results"></div>
     </div>
   </main>
 
   <script src="auth.js"></script>
+  <script src="app.js"></script>
   <script src="document-analysis.js"></script>
-  <script src="pdf-parser.js"></script>
-<script src="usage-limits.js"></script>
-
 </body>
 </html>
